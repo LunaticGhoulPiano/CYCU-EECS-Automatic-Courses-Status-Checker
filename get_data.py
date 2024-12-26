@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import json
-import getpass
 import requests
 
 URL = 'https://myself.cycu.edu.tw'
@@ -52,20 +51,7 @@ def get_file(login_token, cookies, authApi, tgt_url, method, file_name):
         with open(f'{file_name}.json', 'w', encoding = 'utf-8') as f:
             f.write(json.dumps(json_file, indent = 4, ensure_ascii = False))
 
-def get_data():
-    # init
-    usr_id = input('學號：')
-    usr_pwd = getpass.getpass('密碼：')
-    
-    # login
-    login_token, cookies = login(usr_id, usr_pwd)
-    if not login_token:
-        if input('是否重新登入?(Y/N)') == 'Y':
-            return get_data()
-        else:
-            return
-        return get_data()
-
+def get_data(login_token, cookies):
     # get files
     dir_name = './CYCU-Myself'
     os.makedirs(dir_name, exist_ok = True)
@@ -73,5 +59,3 @@ def get_data():
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_base_info', f'{dir_name}/選課系統_基本資料')
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'track_get', f'{dir_name}/選課系統_追蹤清單')
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_info_get', f'{dir_name}/選課系統_總覽')
-
-    return usr_id

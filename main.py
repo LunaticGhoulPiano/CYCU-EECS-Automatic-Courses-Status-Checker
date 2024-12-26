@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
-from get_data import get_data
+import os
+from dotenv import load_dotenv, set_key
+from get_data import login, get_data
 from get_basic_course_table import get_basic_course_table
+
+ENV_PATH = '.env'
 
 class Student:
     def __init__(self, usr_id):
@@ -22,13 +26,44 @@ class Student:
         print(f'班級編號：{self.class_num}')
         print(f'座號：{self.number}')
 
+def init(failed = False):
+    usr_id = os.getenv('USR_ID')
+    usr_pwd = os.getenv('USR_PWD')
+    if not usr_id or failed:
+        usr_id = input('學號：')
+        set_key(ENV_PATH, 'USR_ID', usr_id)
+    if not usr_pwd or failed:
+        usr_pwd = input('密碼：')
+        set_key(ENV_PATH, 'USR_PWD', usr_pwd)
+    
+    # login
+    login_token, cookies = login(usr_id, usr_pwd)
+    if not login_token:
+        if input('是否重新登入?(Y/N)') == 'Y':
+            return init(failed = True)
+        else:
+            return None, None
+    
+    # parse id
+    usr = Student(usr_id)
+    usr.parse_id()
+    return usr, login_token, cookies
+
 def main():
     print('> 中原大學電機資訊學院學士班 學程與修課狀態確認系統')
+    usr, login_token, cookies = init(failed = False)
+    if not login_token and not cookies:
+        print('> 正在結束系統...')
+        return
     print('> 正在取得CYCU-Myself檔案...')
-    usr = Student(get_data())
-    usr.parse_id()
+    get_data(login_token, cookies)
     print('> 正在取得應修科目表...')
     get_basic_course_table(usr.enroll_year)
 
 if __name__ == "__main__":
+    if not load_dotenv():
+        if not os.path.exists(ENV_PATH):
+            with open(ENV_PATH, 'w', encoding = 'utf-8') as f:
+                f.write('USR_ID=\n')
+                f.write('USR_PWD=\n')
     main()
