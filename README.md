@@ -1,19 +1,22 @@
 # CYCU-EECS-Automatic-Courses-Status-Checker
-- 目前進度：
-    - 到CYCU Myself下載選課系統資料與歷年修課
-    - 還在寫
-    - 還沒有寫抓線上表單選課作業
+- 目前功能：
+    - 到CYCU Myself爬取選課系統資料與歷年修課
 
-- 爬取到的檔案：
+- TODO:
+    - 根據歷屆修課產生修課狀態Excel表
+    - 根據選課系統的修課清單產生預排課表
+    - 抓線上表單選課作業（optional）
+
+- 爬取到的檔案架構：
 ```
 CYCU-Myself
 |-歷年修課.json
-|-選課系統-追蹤清單.json
-|-選課系統-基本資料.json
-|-選課系統-總覽.json
+|-選課系統_追蹤清單.json
+|-選課系統_基本資料.json
+|-選課系統_總覽.json
 ```
 
-- ```選課系統-總覽```欄位包含：
+- ```選課系統_總覽.json```的欄位（整理中）：
     - 登記清單 register_get
     - 修課清單 take_course_get
     - st_info

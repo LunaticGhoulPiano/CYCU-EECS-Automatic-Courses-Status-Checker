@@ -70,6 +70,6 @@ def get_data():
     dir_name = './CYCU-Myself'
     os.makedirs(dir_name, exist_ok = True)
     get_file(login_token, cookies, '/credit/json/ss_loginUser.jsp', '/myself_api_127/credit/api/api_credit.jsp', 'query', f'{dir_name}/歷年修課')
-    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_base_info', f'{dir_name}/選課系統-基本資料')
-    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'track_get', f'{dir_name}/選課系統-追蹤清單')
-    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_info_get', f'{dir_name}/選課系統-總覽')
+    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_base_info', f'{dir_name}/選課系統_基本資料')
+    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'track_get', f'{dir_name}/選課系統_追蹤清單')
+    get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_info_get', f'{dir_name}/選課系統_總覽')
