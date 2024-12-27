@@ -2,7 +2,7 @@
 import os
 from dotenv import load_dotenv, set_key
 from get_data import login, get_data
-from get_basic_course_table import get_basic_course_table
+from get_files import get_files
 
 ENV_PATH = '.env'
 
@@ -58,7 +58,7 @@ def main():
     print('> 正在取得CYCU-Myself檔案...')
     get_data(login_token, cookies)
     print('> 正在取得應修科目表...')
-    get_basic_course_table(usr.enroll_year)
+    get_files(usr.enroll_year)
 
 if __name__ == "__main__":
     if not load_dotenv():

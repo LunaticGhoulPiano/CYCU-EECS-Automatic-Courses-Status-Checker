@@ -1,19 +1,27 @@
 # CYCU-EECS-Automatic-Courses-Status-Checker
 - 目前功能：
-    - 到CYCU Myself爬取選課系統資料與歷年修課
-
+    - 到[CYCU Myself](https://myself.cycu.edu.tw/)爬取選課系統資料與歷年修課(JSON)
+    - 到[修課須知&應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)下載課程地圖、注意事項與應修科目表(PDF)
 - TODO:
-    - 根據歷屆修課產生修課狀態Excel表
+    - 完成```get_files.download()```中，到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載四大學系學程表與共同規劃學程表(EXCEL)
+    - 完成```get_files.pdr_ocr()```
+    - 根據歷屆修課產生修課狀態Excel表：```generate_status_table.py```
     - 根據選課系統的修課清單產生預排課表
     - 抓線上表單選課作業（optional）
 
 - 爬取到的檔案架構：
 ```
-CYCU-Myself
-|-歷年修課.json
-|-選課系統_追蹤清單.json
-|-選課系統_基本資料.json
-|-選課系統_總覽.json
+.
+├──CYCU-Myself
+│ ├──歷年修課.json
+│ ├──選課系統_追蹤清單.json
+│ ├──選課系統_基本資料.json
+│ └──選課系統_總覽.json
+│──PDF
+│ ├──電資學士班應修科目表課程地圖.pdf
+│ ├──電機資訊學院學士班修課注意事項.pdf
+│ └──根據{你的學號(入學年度)}下載的對應應修科目表.pdf
+└──...
 ```
 
 - ```選課系統_總覽.json```的欄位（整理中）：
