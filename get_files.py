@@ -12,12 +12,13 @@ PROGRAM_URL = 'https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%
 
 # TODO: OCR PDFs
 def pdf_ocr(pdf_file_names):
+    return
     for pdf_file_name in pdf_file_names:
         file_name = pdf_file_name.replace('.pdf', '')
         pass
 
 def download(enroll_year):
-    # get html
+    # get basic course table html
     try:
         response = requests.get(BASIC_COURSE_TABLE_URL, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
         response.raise_for_status() # ensure response is 200
@@ -47,6 +48,7 @@ def download(enroll_year):
     # download pdfs
     dir_name = './PDF'
     os.makedirs(dir_name, exist_ok = True)
+    print('> 正在下載應修科目表等相關檔案...')
     for file_name, link in mapping.items():
         try:
             #time.sleep(0.3) # anti-anti-spidering
@@ -57,16 +59,43 @@ def download(enroll_year):
             return
         with open(f'{dir_name}/{file_name}', 'wb') as f:
             f.write(response.content)
-    
-    return
 
     # OCR
     pdf_ocr(file_names)
 
-    # TODO: dowload program
+    # get program html
+    try:
+        response = requests.get(PROGRAM_URL, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
+        response.raise_for_status() # ensure response is 200
+    except requests.exceptions.RequestException as e:
+        print('> 網頁獲取失敗：')
+        print(e)
+        return
+    response.encoding = 'utf-8'
+    soup = BeautifulSoup(response.text, 'html.parser')
+    links = soup.find_all('a', href = True)
+    links = [link for link in links if link['href'].endswith('.xlsx')]
+    if not links:
+        print('> 查無相關學程表！')
+        return
+    links = [urljoin(PROGRAM_URL, link['href']) for link in links if link['href'].endswith('.xlsx')]
+    file_names = [urlparse(link).path.split('/')[-1] for link in links]
+    mapping = {file_name: link for file_name, link in zip(file_names, links)}
+
+    # download EXCELs
+    dir_name = './Program'
+    os.makedirs(dir_name, exist_ok = True)
+    print('> 正在下載學程表...')
+    for file_name, link in mapping.items():
+        try:
+            #time.sleep(0.3) # anti-anti-spidering
+            response = requests.get(link, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
+            response.raise_for_status() # ensure response is 200
+        except requests.exceptions.RequestException as e:
+            print(f'> {file_name}下載失敗：{e}')
+            return
+        with open(f'{dir_name}/{file_name}', 'wb') as f:
+            f.write(response.content)
 
 def get_files(enroll_year):
     download(enroll_year)
-
-#if __name__ == "__main__":
-#    get_files('110')
