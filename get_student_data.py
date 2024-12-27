@@ -10,12 +10,14 @@ HEADERS = {'Content-Type': 'application/json',
            'Connection': 'keep-alive'}
 
 def login(usr_id, usr_pwd):
-    response = requests.post(url = URL + '/auth/myselfLogin',
-                             data = json.dumps({'UserNm': usr_id, 'UserPasswd': usr_pwd}),
-                             headers = HEADERS)
-    
-    if response.status_code != 200:
-        print('> 網頁獲取失敗！')
+    try:
+        response = requests.post(url = URL + '/auth/myselfLogin',
+                                data = json.dumps({'UserNm': usr_id, 'UserPasswd': usr_pwd}),
+                                headers = HEADERS)
+        response.raise_for_status() # ensure response is 200
+    except requests.exceptions.RequestException as e:
+        print('> 網頁獲取失敗：')
+        print(e)
         return None, None
     if response.text == '伺服器執行錯誤(i)' or response.json()['done_YN'] != "Y":
         print('> 登入失敗！學號或密碼錯誤！')
@@ -48,10 +50,13 @@ def get_file(login_token, cookies, authApi, tgt_url, method, file_name):
     auth_token, cookies = authenticate(cookies, authApi)
     if auth_token:
         json_file = get_json(login_token, auth_token, cookies, tgt_url, method)
-        with open(f'{file_name}.json', 'w', encoding = 'utf-8') as f:
-            f.write(json.dumps(json_file, indent = 4, ensure_ascii = False))
+        if json_file:
+            with open(f'{file_name}.json', 'w', encoding = 'utf-8') as f:
+                f.write(json.dumps(json_file, indent = 4, ensure_ascii = False))
+        else:
+            print(f'> {file_name} 獲取失敗！')
 
-def get_data(login_token, cookies):
+def get_student_data(login_token, cookies):
     # get files
     dir_name = './CYCU-Myself'
     os.makedirs(dir_name, exist_ok = True)

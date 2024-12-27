@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import time
 import requests
@@ -21,7 +22,8 @@ def download(enroll_year):
         response = requests.get(BASIC_COURSE_TABLE_URL, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
         response.raise_for_status() # ensure response is 200
     except requests.exceptions.RequestException as e:
-        print(f'> 網頁獲取失敗：{e}')
+        print('> 網頁獲取失敗：')
+        print(e)
         return
     response.encoding = 'utf-8'
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -36,7 +38,9 @@ def download(enroll_year):
     file_names = [urlparse(link).path.split('/')[-1] for link in links]
     mapping = {file_name: link for file_name, link in zip(file_names, links) 
                if ('修課注意事項' in file_name or '課程地圖' in file_name or enroll_year in file_name)}
-    if enroll_year not in file_names:
+    
+    # check enroll year
+    if not [file_name for file_name in file_names if enroll_year in file_name]:
         print('> 查無對應入學年度之應修科目表！')
         return
 
@@ -45,7 +49,7 @@ def download(enroll_year):
     os.makedirs(dir_name, exist_ok = True)
     for file_name, link in mapping.items():
         try:
-            time.sleep(0.5) # anti-anti-spidering
+            #time.sleep(0.3) # anti-anti-spidering
             response = requests.get(link, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
             response.raise_for_status() # ensure response is 200
         except requests.exceptions.RequestException as e:
@@ -64,5 +68,5 @@ def download(enroll_year):
 def get_files(enroll_year):
     download(enroll_year)
 
-if __name__ == "__main__":
-    get_files('110')
+#if __name__ == "__main__":
+#    get_files('110')
