@@ -3,6 +3,9 @@ import os
 from dotenv import load_dotenv, set_key
 from get_student_data import login, get_student_data
 from get_files import get_files
+from parse_basic_course_table import parse_basic_course_table
+from generate_status_table import generate_status_table
+from generate_future_course_table import generate_future_course_table
 
 ENV_PATH = '.env'
 
@@ -56,8 +59,18 @@ def main():
         return
     print('> 正在取得CYCU-Myself檔案...')
     get_student_data(login_token, cookies)
-    print('> 正在取得應修科目表...')
+    print('> 正在取得應修科目表及學程表...')
     get_files(usr.enroll_year)
+    print('> 正在解析應修科目表...')
+    parse_basic_course_table(usr.enroll_year)
+    
+    return
+    # TODO
+    print('> 正在產生修課狀態表...')
+    generate_status_table(usr.enroll_year)
+    print('> 正在產生未修課狀態表...')
+    generate_future_course_table(usr.enroll_year)
+    print('> 正在結束系統...')
 
 if __name__ == "__main__":
     if not load_dotenv():

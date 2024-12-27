@@ -3,4 +3,6 @@ import os
 import json
 import openpyxl
 
-# read files, and generate excel file of course status
+# TODO: read files, and generate excel file of course status
+def generate_status_table():
+    pass

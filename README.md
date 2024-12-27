@@ -4,25 +4,50 @@
     - 到[修課須知&應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)下載課程地圖、注意事項與應修科目表(PDF)
     - 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表(EXCEL)
 - TODO:
-    - 完成```get_files.pdr_ocr()```
-    - 根據歷屆修課產生修課狀態Excel表：```generate_status_table.py```
-    - 根據選課系統的修課清單產生預排課表
+    - 完成```parse_basic_course_table.py```
+        - ```pdf_ocr()```：掃描解析PDF並轉換成文字
+        - ```parse()```：根據應修科目表產生畢業規則，可能需要LLM的協助
+    - 完成```generate_status_table.py```：
+        - 根據歷屆修課與畢業規則產生修課狀態Excel表
+    - 完成```generate_future_course_table.py```:
+        - 根據選課系統的修課清單（與追蹤清單？）等產生預排課表
     - 抓線上表單選課作業（optional）
+    - 打包成可執行檔發行Release (Windows / macOS / Linux)
 
-- 爬取到的檔案架構：
+- 檔案架構：
 ```
 .
-├──CYCU-Myself
+├──.env（自動產生）
+├──.gitignore
+├──LICENSE
+├──README.md
+├──requirements.txt
+├──main.py
+├──get_student_data.py
+├──get_files.py
+├──parse_basic_course_table.py
+├──generate_status_table.py
+├──generate_future_course_table.py
+├──CYCU-Myself（自動產生）
 │ ├──歷年修課.json
 │ ├──選課系統_追蹤清單.json
 │ ├──選課系統_基本資料.json
 │ └──選課系統_總覽.json
-│──PDF
+│──PDF（自動產生）
 │ ├──電資學士班應修科目表課程地圖.pdf
 │ ├──電機資訊學院學士班修課注意事項.pdf
 │ └──根據{你的學號(入學年度)}下載的對應應修科目表.pdf
-└──...
+│ └──選課系統_總覽.json
+└──Program（自動產生）
+  ├──工業系-中原大學工業與系統工程學系學程規畫表.xlsx
+  ├──通訊學程-中原大學電子與電機工程學系共同規畫通訊學程.xlsx
+  ├──資工系-中原大學資訊工程學系學程規畫表-{當前的版本}.xlsx
+  ├──電子系-中原大學電子工程學系學程規畫表.xlsx
+  └──電機系-中原大學電機工程學系學程規畫表.xlsx
 ```
+
+- 安裝指令：
+```pip install -r requirements.txt```
 
 - ```選課系統_總覽.json```的欄位（整理中）：
     - 登記清單 register_get

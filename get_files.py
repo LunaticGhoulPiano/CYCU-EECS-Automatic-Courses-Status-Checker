@@ -47,7 +47,7 @@ def download(enroll_year):
             response = requests.get(link, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
             response.raise_for_status() # ensure response is 200
         except requests.exceptions.RequestException as e:
-            print(f'> {file_name}下載失敗：{e}')
+            print(f'> \"{file_name}\"下載失敗：{e}')
             return
         with open(f'{dir_name}/{file_name}', 'wb') as f:
             f.write(response.content)
@@ -81,7 +81,7 @@ def download(enroll_year):
             response = requests.get(link, headers = {'User-Agent': UserAgent().random, 'Connection': 'keep-alive'})
             response.raise_for_status() # ensure response is 200
         except requests.exceptions.RequestException as e:
-            print(f'> {file_name}下載失敗：{e}')
+            print(f'> \"{file_name}\"下載失敗：{e}')
             return
         with open(f'{dir_name}/{file_name}', 'wb') as f:
             f.write(response.content)

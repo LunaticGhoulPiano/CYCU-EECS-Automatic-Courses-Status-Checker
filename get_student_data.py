@@ -54,7 +54,7 @@ def get_file(login_token, cookies, authApi, tgt_url, method, file_name):
             with open(f'{file_name}.json', 'w', encoding = 'utf-8') as f:
                 f.write(json.dumps(json_file, indent = 4, ensure_ascii = False))
         else:
-            print(f'> {file_name} 獲取失敗！')
+            print(f'> \"{file_name}\"獲取失敗！')
 
 def get_student_data(login_token, cookies):
     # get files
