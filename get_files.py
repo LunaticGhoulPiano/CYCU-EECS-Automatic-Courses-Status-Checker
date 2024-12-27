@@ -2,20 +2,12 @@
 import os
 import time
 import requests
-import ocrmypdf
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from fake_useragent import UserAgent
 
 BASIC_COURSE_TABLE_URL = 'https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/'
 PROGRAM_URL = 'https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/'
-
-# TODO: OCR PDFs
-def pdf_ocr(pdf_file_names):
-    return
-    for pdf_file_name in pdf_file_names:
-        file_name = pdf_file_name.replace('.pdf', '')
-        pass
 
 def download(enroll_year):
     # get basic course table html
@@ -59,9 +51,6 @@ def download(enroll_year):
             return
         with open(f'{dir_name}/{file_name}', 'wb') as f:
             f.write(response.content)
-
-    # OCR
-    pdf_ocr(file_names)
 
     # get program html
     try:
