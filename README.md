@@ -7,10 +7,10 @@
         - Json最外圈是list
         - 每個index對應每頁應修科目表的頁碼-1，如第一頁的index是0
         - 每頁的結構都是
-            ```Json
+            ```
             {
-                "text": 每頁的文本<class 'str'>,
-                "table": 每頁含有的表格<class 'list'>
+                "text": 每頁的文本 <class 'str'>,
+                "table": 每頁含有的表格 <class 'list'>
             }
             ```
         - ```table```是2D list
