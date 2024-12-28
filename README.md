@@ -3,17 +3,7 @@
     - 到[CYCU Myself](https://myself.cycu.edu.tw/)爬取選課系統資料與歷年修課(JSON)
     - 到[修課須知&應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)下載課程地圖、注意事項與應修科目表(PDF)
     - 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表(EXCEL)
-    - 將應修科目表透過OCR轉換成每頁對應的文本與表格(JSON):
-        - Json最外圈是list
-        - 每個index對應每頁應修科目表的頁碼-1，如第一頁的index是0
-        - 每頁的結構都是
-            ```
-            {
-                "text": 每頁的文本 <class 'str'>,
-                "table": 每頁含有的表格 <class 'list'>
-            }
-            ```
-        - ```table```是2D list
+    - 將應修科目表透過OCR轉換成每頁對應的文本與表格(JSON)
 
 - TODO:
     - 處理檔案已存在要不要覆蓋的問題
