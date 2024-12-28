@@ -9,8 +9,7 @@
     - 處理檔案已存在要不要覆蓋的問題
     - 完成```parse_basic_course_table.py```
         - ```table_manual()```: 手動設定
-        - ```table_chatgpt()```: 透過ChatGPT API KEY讓ChatGPT整理出固定格式的規則
-        - 是否需要Ollama？
+        - ```table_TaiwanLLM()```: 讓[TaiwanL LLM](https://github.com/MiuLab/Taiwan-LLM)整理出固定格式的規則
     - 完成```generate_status_table.py```：
         - 根據歷屆修課與畢業規則產生修課狀態Excel表
     - 完成```generate_future_course_table.py```:

@@ -24,11 +24,11 @@ def table_manual(path, file_name, enroll_year):
     pass
 
 # TODO: get ChatGPT token and send the rules to ChatGPT
-def table_chatgpt(path, file_name, enroll_year):
-    api_key = os.getenv('CHATGPT_API_KEY')
+def table_TaiwanLLM(path, file_name, enroll_year):
+    api_key = os.getenv('TAIWAN_LLM_API_KEY')
     if not api_key:
-        api_key = input('請輸入ChatGPT API Key: ')
-        set_key(ENV_PATH, 'CHATGPT_API_KEY', api_key)
+        api_key = input('請輸入Taiwan LLM API Key: ')
+        set_key(ENV_PATH, 'TAIWAN_LLM_API_KEY', api_key)
 
 def parse_basic_course_table(enroll_year):
     if os.path.exists('./PDF'):
@@ -47,8 +47,8 @@ def parse_basic_course_table(enroll_year):
             print(f'> 正在轉換\"{file_name[0]}\"...')
             table_ocr(path, f'./PDF/{file_name[0]}', enroll_year)
             # ChatGPT
-            if input('> 是否要用ChatGPT整理自動設定修課規則(Y/N)？ ') == 'Y':
-                table_chatgpt(path, f'./PDF/{file_name[0]}', enroll_year)
+            if input('> 是否要用Taiwan LLM整理自動設定修課規則(Y/N)？ ') == 'Y':
+                table_TaiwanLLM(path, f'./PDF/{file_name[0]}', enroll_year)
             # manual setting
             if input('> 是否要手動設定修課規則(Y/N)? ') == 'Y':
                 table_manual(path, f'./PDF/{file_name[0]}', enroll_year)
