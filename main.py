@@ -41,7 +41,7 @@ def init(failed = False):
     # login
     login_token, cookies = login(usr_id, usr_pwd)
     if not login_token:
-        if input('是否重新登入?(Y/N)') == 'Y':
+        if input('是否重新登入(Y/N)? ') == 'Y':
             return init(failed = True)
         else:
             return None, None, None
@@ -78,5 +78,6 @@ if __name__ == "__main__":
             with open(ENV_PATH, 'w', encoding = 'utf-8') as f:
                 f.write('USR_ID=\n')
                 f.write('USR_PWD=\n')
+                f.write('CHATGPT_API_KEY=\n')
     main()
     os.system('pause')
