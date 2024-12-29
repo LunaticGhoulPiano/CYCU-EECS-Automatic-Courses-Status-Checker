@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import time
 import requests
 from bs4 import BeautifulSoup
@@ -33,8 +34,9 @@ def download(enroll_year):
                if ('修課注意事項' in file_name or '課程地圖' in file_name or enroll_year in file_name)}
     
     # check enroll year
-    if not [file_name for file_name in file_names if enroll_year in file_name]:
-        print('> 查無對應入學年度之應修科目表！')
+    available_enroll_years = sorted([re.search(r'\d+', file_name).group() for file_name in file_names if re.search(r'\d+', file_name)])
+    if enroll_year not in available_enroll_years:
+        print(f'> 查無對應入學年度之應修科目表！不支援的學年度:{enroll_year}')
         return
 
     # download pdfs
