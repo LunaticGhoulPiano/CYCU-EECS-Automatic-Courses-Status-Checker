@@ -504,14 +504,12 @@ def parse_df_to_dict(df, program_name):
                 type_indices[program_name][cell] = int(column_idx) - 1
     
     # get contents by indices
-    program_dict = {}
-    print(program_indices)
+    contents_of_programs = {}
     for program_name, type_dict in type_indices.items():
-        print(f'{program_name}, column index = {program_indices[program_name]}')
-        must_have_types = ['必修', '核心', '選修'] # else 備註
+        contents = {}
         # iterate 必修/核心/選修 by its index
         for cur_type in type_dict.keys():
-            if cur_type in must_have_types:
+            if cur_type in ['必修', '核心', '選修']:
                 # get the range of the type
                 row_start_idx = type_dict[cur_type]
                 row_end_idx = list(type_dict.values())[list(type_dict.keys()).index(cur_type) + 1] \
@@ -526,10 +524,20 @@ def parse_df_to_dict(df, program_name):
                 review_comment_contents = df.iloc[row_start_idx:row_end_idx, column_start_idx:column_end_idx]
                 if len(course_contents) != len(review_comment_contents):
                     print(f'>  錯誤：{program_name} {cur_type} 的課程數量與對應的(審核)備註數量不一致！')
+                    return None
                 else:
-                    # add into program_dict
-                    pass
-    # parse cells
+                    contents[cur_type] = {
+                        'course_contents': course_contents,
+                        'review_comment_contents': review_comment_contents
+                    }
+        contents_of_programs[program_name] = contents
+    
+    # get context(str) of each cell into dictionary
+    program_dict = {}
+    for key, value in contents_of_programs.items():
+        pass
+
+    # parse context
 
     # return
     print('-----------------------------------------')
@@ -567,7 +575,6 @@ def get_program_info(path, enroll_year):
             #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
             program_dict[program_name] = parse_df_to_dict(df, program_name)
         else:
-            #continue
             wb = workbooks[program_name]
             sheetnames = wb.sheetnames
             for sheetname in sheetnames:
