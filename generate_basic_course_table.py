@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import openpyxl
 
 class DuplicateProgramError(Exception):
     def __init__(self, message):
@@ -371,6 +372,7 @@ def generate_table(path, enroll_year):
                             raise DuplicateProgramError('  學程重複，請重新輸入。')
                         else:
                             temp_dict[program] = p
+                            temp_dict[f'{program}所屬學系'] = programs[p]['所屬學系']
                             cache.append(p)
                         break
                     except DuplicateProgramError as e:
@@ -459,8 +461,10 @@ def generate_table(path, enroll_year):
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
 # TODO: read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
-def get_program_info(path):
-    return
+def get_program_info(path, enroll_year):
+    # load json
+    json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
+    print(json_dict['學系選修'])
     # read xlsx
     program_dirs = os.listdir('./Program')
     for program_dir in program_dirs:
@@ -469,10 +473,12 @@ def get_program_info(path):
     # write json
     pass
 
-def parse_basic_course_table(enroll_year):
+def generate_basic_course_table(enroll_year):
     path = './Generated'
     os.makedirs(path, exist_ok = True)
     # manual setting
     print('> 正在產生修課規定:')
     generate_table(path, enroll_year)
-    get_program_info(path)
+    get_program_info(path, enroll_year)
+
+generate_basic_course_table('110')
