@@ -293,66 +293,77 @@ def generate_table(path, enroll_year):
             programs = {
                 '生產管理學程': {
                     '所屬學系': '工業與系統工程學系',
+                    '對應xlsx名': '工業',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '品質管理學程': {
                     '所屬學系': '工業與系統工程學系',
+                    '對應xlsx名': '工業',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '經營管理學程': {
                     '所屬學系': '工業與系統工程學系',
+                    '對應xlsx名': '工業',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '半導體學程': {
                     '所屬學系': '電子工程學系',
+                    '對應xlsx名': '電子',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '電路設計學程': {
                     '所屬學系': '電子工程學系',
+                    '對應xlsx名': '電子',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '電力學程': {
                     '所屬學系': '電機工程學系',
+                    '對應xlsx名': '電機',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '控制學程': {
                     '所屬學系': '電機工程學系',
+                    '對應xlsx名': '電機',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '通訊學程': {
                     '所屬學系': ['電子工程學系', '電機工程學系'],
+                    '對應xlsx名': '通訊',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '資訊硬體學程': {
                     '所屬學系': '資訊工程學系',
+                    '對應xlsx名': '資工',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '資訊軟體學程': {
                     '所屬學系': '資訊工程學系',
+                    '對應xlsx名': '資工',
                     '必修': None,
                     '核心': None,
                     '選修': None
                 },
                 '資訊應用學程': {
                     '所屬學系': '資訊工程學系',
+                    '對應xlsx名': '資工',
                     '必修': None,
                     '核心': None,
                     '選修': None
@@ -379,6 +390,7 @@ def generate_table(path, enroll_year):
                         print(e)
                     except KeyError:
                         print('  無此編號，請重新輸入。')
+            temp_dict['學程細項'] = programs
         elif key == '通識延伸選修':
             temp_dict = {
                 '天': { '最低應修學分數': 2 },
@@ -464,12 +476,33 @@ def generate_table(path, enroll_year):
 def get_program_info(path, enroll_year):
     # load json
     json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
-    print(json_dict['學系選修'])
     # read xlsx
-    program_dirs = os.listdir('./Program')
-    for program_dir in program_dirs:
-        pass
-
+    programs = os.listdir('./Program')
+    workbooks = {}
+    for program in programs:
+        if '資工' in program:
+            CS = openpyxl.load_workbook(f'./Program/{program}')
+            workbooks['資工'] = CS
+        elif '工業' in program:
+            IE = openpyxl.load_workbook(f'./Program/{program}')
+            workbooks['工業'] = IE
+        elif '通訊' in program:
+            EL_EE = openpyxl.load_workbook(f'./Program/{program}')
+            workbooks['通訊'] = EL_EE
+        elif '電子' in program:
+            EL = openpyxl.load_workbook(f'./Program/{program}')
+            workbooks['電子'] = EL
+        else: # '電機'
+            EE = openpyxl.load_workbook(f'./Program/{program}')
+            workbooks['電機'] = EE
+    if len(list(workbooks.keys())) != 5:
+        print('> 錯誤: 缺少五大學程規劃表！')
+        return
+    
+    # read xlsx
+    print(workbooks['資工'])
+    pass
+    
     # write json
     pass
 
@@ -481,4 +514,5 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-generate_basic_course_table('110')
+#generate_basic_course_table('110')
+#get_program_info('./Generated', '110')
