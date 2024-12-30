@@ -506,8 +506,7 @@ def get_program_info(path, enroll_year):
         if program_name != '資工':
             ws = workbooks[program_name].active
             df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
-            print(program_name)
-            print(df.head(2))
+            #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
             program_dict = parse_df_to_dict(df, program_name)
         else:
             wb = workbooks[program_name]
@@ -515,11 +514,13 @@ def get_program_info(path, enroll_year):
             for sheetname in sheetnames:
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
-                print(program_name)
-                print(df.head(2))
+                #print(program_name)
+                #print(df.head(2))
                 if '四大類' not in sheetname:
+                    #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
                     program_dict = parse_df_to_dict(df, program_name)
                 else:
+                    #df.to_csv(f'./temp/{program_name}四大類.csv', index = False, encoding = 'utf-8')
                     program_dict = parse_cs_four_types_df_to_dict(df)
 
     return
@@ -541,6 +542,10 @@ def generate_basic_course_table(enroll_year):
     os.makedirs(path, exist_ok = True)
     # manual setting
     print('> 正在產生修課規定:')
+    if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
+        if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
+            return
+    return
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
