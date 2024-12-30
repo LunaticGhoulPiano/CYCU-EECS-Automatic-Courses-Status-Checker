@@ -475,13 +475,13 @@ def generate_table(path, enroll_year):
 
 def parse_df_to_dict(df, program_name):
     # get indices
-    ## 各學程名稱所在的row index
+    ## 各學程名稱所在的column index
     first_row = df.iloc[0, :].values.tolist()
-    program_indices = { # row indices
+    program_indices = { # column indices
         program: idx for idx, program in enumerate(first_row) if program is not None and '學程' in program
     }
 
-    ## 各學程對應的 必修/核心/選修/備註 欄位的column index
+    ## 各學程對應的 必修/核心/選修/備註 欄位的row index
     """
     要記錄每個學程對應的必修/核心/選修/備註的row index
     但判斷是系辦寫備註的格式沒有規律
@@ -494,7 +494,7 @@ def parse_df_to_dict(df, program_name):
     但若備註欄位長度<=5就會出錯
     """
     max_str_len = 5
-    type_indices = {} # column indices
+    type_indices = {} # row indices
     for program_name, program_idx in program_indices.items():
         type_indices[program_name] = {}
         for column_idx, cell in df.iloc[:, program_idx-1].items():
@@ -504,13 +504,26 @@ def parse_df_to_dict(df, program_name):
                 type_indices[program_name][cell] = int(column_idx) - 1
     
     # get contents by indices
-    print(program_indices)
-    print(type_indices)
-
+    program_dict = {}
+    for program_name, type_dict in type_indices.items():
+        print(f'{program_name}, column index = {program_indices[program_name]}')
+        must_have_types = ['必修', '核心', '選修'] # else 備註
+        # iterate 必修/核心/選修 by its index
+        for cur_type in type_dict.keys():
+            if cur_type in must_have_types:
+                # get the range of the type
+                start_idx = type_dict[cur_type]
+                end_idx = list(type_dict.values())[list(type_dict.keys()).index(cur_type) + 1] \
+                    if cur_type != list(type_dict.keys())[-1] else start_idx + 1
+                #print(f'{cur_type}, row index in column index = {program_indices[program_name]}: start = {start_idx}, end = {end_idx}')
+                print(df.iloc[start_idx:end_idx, program_indices[program_name]])
+                # get actual contents with different logic
+            print()
+        print()
+    exit()
     # parse cells
 
     # return
-    program_dict = {}
 
 def parse_cs_four_types_df_to_dict(df):
     pass
