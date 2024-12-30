@@ -544,9 +544,9 @@ def generate_basic_course_table(enroll_year):
     if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
         if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
             return
-    return
+    #return
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
-
+"""
 #generate_basic_course_table('110')
-get_program_info('./Generated', '110')
+get_program_info('./Generated', '110')"""

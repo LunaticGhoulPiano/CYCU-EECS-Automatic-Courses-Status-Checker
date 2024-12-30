@@ -79,4 +79,3 @@ if __name__ == "__main__":
                 f.write('USR_PWD=\n')
                 f.write('CHATGPT_API_KEY=\n')
     main()
-    os.system('pause')

@@ -1,21 +1,25 @@
 # CYCU-EECS-Automatic-Courses-Status-Checker
-- 目前功能：
-    - 到[CYCU Myself](https://myself.cycu.edu.tw/)爬取選課系統資料與歷年修課至```CYCU-Myself```資料夾
-    - 到[修課須知&應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)下載課程地圖、注意事項與應修科目表至```PDF```資料夾
-    - 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表至```Program```資料夾
-    - 根據入學年度（以是否有在[官網提供的應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)中為準）自動產生畢業條件到```Generated```資料夾
 
-- TODO:
-    - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-    - 完成```generate_basic_course_table.get_program_info()```，將各學程的必修/核心/選修寫入```./Generated/{入學年度}_基本畢業條件.json```
-    - 完成```generate_status_table.py```：
-        - 根據歷屆修課與畢業規則產生修課狀態Excel表
-    - 完成```generate_future_course_table.py```:
-        - 根據選課系統的修課清單（與追蹤清單？）等產生預排課表
-    - 抓線上表單選課作業（optional）
-    - 打包成可執行檔發行Release (Windows / macOS / Linux)
+## 身為電資學院的學生，你應該不至於不會跑Python吧？我就不提供執行檔了。
+## 修課規則是以電機資訊學院學士班官網最新的資料設定的，請以你自身入學時下載的硬修科目表與學程表為準。
 
-- 檔案架構：
+### 目前功能：
+- 到[CYCU Myself](https://myself.cycu.edu.tw/)爬取選課系統資料與歷年修課至```CYCU-Myself```資料夾
+- 到[修課須知&應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)下載課程地圖、注意事項與應修科目表至```PDF```資料夾
+- 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表至```Program```資料夾
+- 根據入學年度（以是否有在[官網提供的應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)中為準）自動產生畢業條件到```Generated```資料夾
+
+### TODO:
+- 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
+- 完成```generate_basic_course_table.get_program_info()```，將各學程的必修/核心/選修寫入```./Generated/{入學年度}_基本畢業條件.json```
+- 完成```generate_status_table.py```：
+    - 根據歷屆修課與畢業規則產生修課狀態Excel表
+- 完成```generate_future_course_table.py```:
+    - 根據選課系統的修課清單（與追蹤清單？）等產生預排課表
+- 抓線上表單選課作業（optional）
+- 打包成可執行檔發行Release (Windows / macOS / Linux)
+
+### 檔案架構：
 ```
 .
 ├──.env（自動產生）
@@ -48,6 +52,7 @@
   └──電機系-中原大學電機工程學系學程規畫表.xlsx
 ```
 
+### 其它
 - 安裝指令：
 ```pip install -r requirements.txt```
 
