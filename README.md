@@ -7,7 +7,7 @@
 
 - TODO:
     - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-    - 完成```parse_basic_course_table.get_program_info()```，將各學程的必修/核心/選修寫入```./Generated/{入學年度}_基本畢業條件.json```
+    - 完成```generate_basic_course_table.get_program_info()```，將各學程的必修/核心/選修寫入```./Generated/{入學年度}_基本畢業條件.json```
     - 完成```generate_status_table.py```：
         - 根據歷屆修課與畢業規則產生修課狀態Excel表
     - 完成```generate_future_course_table.py```:
@@ -26,7 +26,7 @@
 ├──main.py
 ├──get_student_data.py
 ├──get_files.py
-├──parse_basic_course_table.py
+├──generate_basic_course_table.py
 ├──generate_status_table.py
 ├──generate_future_course_table.py
 ├──CYCU-Myself（自動產生）
