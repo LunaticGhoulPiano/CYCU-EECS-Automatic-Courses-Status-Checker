@@ -474,7 +474,43 @@ def generate_table(path, enroll_year):
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
 def parse_df_to_dict(df, program_name):
-    pass
+    # get indices
+    ## 各學程名稱所在的row index
+    first_row = df.iloc[0, :].values.tolist()
+    program_indices = { # row indices
+        program: idx for idx, program in enumerate(first_row) if program is not None and '學程' in program
+    }
+
+    ## 各學程對應的 必修/核心/選修/備註 欄位的column index
+    """
+    要記錄每個學程對應的必修/核心/選修/備註的row index
+    但判斷是系辦寫備註的格式沒有規律
+    必修/核心/選修下方的欄位(cell)可能會著名他的學分數也可能沒有
+    因此設定max_str_len = 5
+    因為備註欄位的長度目前看來必定>5
+    而必修/核心/選修和對應的學分數欄位之長度必定<5
+    例如電機-控制學程選修的學分數為\"10學分\"長度為4
+    若長度為5則表示所需學分數達三位數 不可能
+    但若備註欄位長度<=5就會出錯
+    """
+    max_str_len = 5
+    type_indices = {} # column indices
+    for program_name, program_idx in program_indices.items():
+        type_indices[program_name] = {}
+        for column_idx, cell in df.iloc[:, program_idx-1].items():
+            if (cell is not None) and \
+                ((len(str(cell)) < max_str_len and any(p_type in str(cell) for p_type in ['必修', '核心', '選修'])) \
+                    or (len(str(cell)) >= max_str_len)):
+                type_indices[program_name][cell] = int(column_idx) - 1
+    
+    # get contents by indices
+    print(program_indices)
+    print(type_indices)
+
+    # parse cells
+
+    # return
+    program_dict = {}
 
 def parse_cs_four_types_df_to_dict(df):
     pass
@@ -501,26 +537,27 @@ def get_program_info(path, enroll_year):
         return
     
     # read xlsx into df and parse into dict
+    program_dict = {}
     for program_name in program_names:
         if program_name != '資工':
             ws = workbooks[program_name].active
             df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
             #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
-            program_dict = parse_df_to_dict(df, program_name)
+            program_dict[program_name] = parse_df_to_dict(df, program_name)
         else:
+            #continue
             wb = workbooks[program_name]
             sheetnames = wb.sheetnames
             for sheetname in sheetnames:
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
-                #print(program_name)
-                #print(df.head(2))
                 if '四大類' not in sheetname:
                     #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
-                    program_dict = parse_df_to_dict(df, program_name)
+                    program_dict[program_name] = parse_df_to_dict(df, program_name)
                 else:
                     #df.to_csv(f'./temp/{program_name}四大類.csv', index = False, encoding = 'utf-8')
-                    program_dict = parse_cs_four_types_df_to_dict(df)
+                    program_dict[program_name] = parse_cs_four_types_df_to_dict(df)
+        #break
 
     return
     # iterate each programs
@@ -544,9 +581,8 @@ def generate_basic_course_table(enroll_year):
     if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
         if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
             return
-    #return
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
-"""
+
 #generate_basic_course_table('110')
-get_program_info('./Generated', '110')"""
+get_program_info('./Generated', '110')
