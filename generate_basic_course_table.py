@@ -514,13 +514,13 @@ def parse_df_to_dict(df, program_name):
                 # get the range of the type
                 start_idx = type_dict[cur_type]
                 end_idx = list(type_dict.values())[list(type_dict.keys()).index(cur_type) + 1] \
-                    if cur_type != list(type_dict.keys())[-1] else start_idx + 1
+                    if cur_type != list(type_dict.keys())[-1] else len(df.iloc[:, program_indices[program_name] - 1])
                 #print(f'{cur_type}, row index in column index = {program_indices[program_name]}: start = {start_idx}, end = {end_idx}')
                 print(df.iloc[start_idx:end_idx, program_indices[program_name]])
                 # get actual contents with different logic
             print()
         print()
-    exit()
+    print('-----------------------------------------')
     # parse cells
 
     # return
