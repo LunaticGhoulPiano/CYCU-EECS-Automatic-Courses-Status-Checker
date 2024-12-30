@@ -477,31 +477,33 @@ def get_program_info(path, enroll_year):
     # load json
     json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
     # read xlsx
-    programs = os.listdir('./Program')
-    workbooks = {}
-    for program in programs:
-        if '資工' in program:
-            CS = openpyxl.load_workbook(f'./Program/{program}')
-            workbooks['資工'] = CS
-        elif '工業' in program:
-            IE = openpyxl.load_workbook(f'./Program/{program}')
-            workbooks['工業'] = IE
-        elif '通訊' in program:
-            EL_EE = openpyxl.load_workbook(f'./Program/{program}')
-            workbooks['通訊'] = EL_EE
-        elif '電子' in program:
-            EL = openpyxl.load_workbook(f'./Program/{program}')
-            workbooks['電子'] = EL
-        else: # '電機'
-            EE = openpyxl.load_workbook(f'./Program/{program}')
-            workbooks['電機'] = EE
-    if len(list(workbooks.keys())) != 5:
-        print('> 錯誤: 缺少五大學程規劃表！')
+    file_names = os.listdir('./Program')
+    try:
+        workbooks = {
+            program: openpyxl.load_workbook(f'./Program/{file_name}') \
+            for file_name in file_names \
+                for program in ['資工', '工業', '通訊', '電子', '電機'] \
+                    if program in file_name
+        }
+    except PermissionError as e:
+        print('> 錯誤：請先關閉excel檔案！')
         return
-    
-    # read xlsx
-    print(workbooks['資工'])
-    pass
+    if len(list(workbooks.keys())) != 5:
+        print('> 錯誤：缺少五大學程規劃表！')
+        return
+    # iterate each programs
+    for program_name, program_dict in json_dict['學系選修']['學程細項'].items():
+        # read xlsx and set 必修/核心/選修/資工四大類
+        if program_dict['對應xlsx名'] != '資工':
+            ws = workbooks[program_dict['對應xlsx名']].active
+            columns = list(zip(*[[cell for cell in row] for row in ws]))
+            for col_idx, column in enumerate(columns, start = 1):
+                print(f'col_idx = {col_idx}')
+                for row_idx, row in enumerate(column, start = 1):
+                    print(row_idx, row.value)
+        else:
+            pass
+        break
     
     # write json
     pass
@@ -515,4 +517,4 @@ def generate_basic_course_table(enroll_year):
     get_program_info(path, enroll_year)
 
 #generate_basic_course_table('110')
-#get_program_info('./Generated', '110')
+get_program_info('./Generated', '110')
