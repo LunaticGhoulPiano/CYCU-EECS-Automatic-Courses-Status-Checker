@@ -474,18 +474,25 @@ def generate_table(path, enroll_year):
     with open(f'{path}/{enroll_year}_基本畢業條件.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
+def parse_df_to_dict(df, program_name):
+    pass
+
+def parse_cs_four_types_df_to_dict(df):
+    pass
+
 # TODO: read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
 def get_program_info(path, enroll_year):
     # load json
     json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
     # read xlsx
     file_names = os.listdir('./Program')
+    program_names = ['資工', '工業', '通訊', '電子', '電機']
     try:
         workbooks = {
-            program: openpyxl.load_workbook(f'./Program/{file_name}') \
+            program_name: openpyxl.load_workbook(f'./Program/{file_name}') \
             for file_name in file_names \
-                for program in ['資工', '工業', '通訊', '電子', '電機'] \
-                    if program in file_name
+                for program_name in program_names \
+                    if program_name in file_name
         }
     except PermissionError as e:
         print('> 錯誤：請先關閉excel檔案！')
@@ -493,27 +500,38 @@ def get_program_info(path, enroll_year):
     if len(list(workbooks.keys())) != 5:
         print('> 錯誤：缺少五大學程規劃表！')
         return
-    # iterate each programs
-    for program_name, program_dict in json_dict['學系選修']['學程細項'].items():
-        # read xlsx and set 必修/核心/選修/資工四大類
-        print(program_dict['對應xlsx名'])
-        if program_dict['對應xlsx名'] != '資工':
-            ws = workbooks[program_dict['對應xlsx名']].active
-            # build table with (ws.max_column * ws.max_row)
+    
+    # read xlsx into df and parse into dict
+    for program_name in program_names:
+        if program_name != '資工':
+            ws = workbooks[program_name].active
             df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
+            print(program_name)
             print(df.head(2))
+            program_dict = parse_df_to_dict(df, program_name)
         else:
-            wb = workbooks[program_dict['對應xlsx名']]
+            wb = workbooks[program_name]
             sheetnames = wb.sheetnames
             for sheetname in sheetnames:
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
+                print(program_name)
                 print(df.head(2))
                 if '四大類' not in sheetname:
-                    pass
+                    program_dict = parse_df_to_dict(df, program_name)
                 else:
-                    pass
-            print()
+                    program_dict = parse_cs_four_types_df_to_dict(df)
+
+    return
+    # iterate each programs
+    for program_name, program_dict in json_dict['學系選修']['學程細項'].items():
+        # read xlsx and set 必修/核心/選修/資工四大類
+        print(program_dict['對應xlsx名'])
+        continue
+        if program_dict['對應xlsx名'] != '資工':
+            pass
+        else:
+            pass
     
     # write json
     pass
