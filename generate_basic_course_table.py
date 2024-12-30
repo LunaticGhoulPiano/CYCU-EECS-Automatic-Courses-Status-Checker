@@ -2,6 +2,8 @@
 import os
 import json
 import openpyxl
+import pandas as pd
+import numpy as np
 
 class DuplicateProgramError(Exception):
     def __init__(self, message):
@@ -494,16 +496,24 @@ def get_program_info(path, enroll_year):
     # iterate each programs
     for program_name, program_dict in json_dict['學系選修']['學程細項'].items():
         # read xlsx and set 必修/核心/選修/資工四大類
+        print(program_dict['對應xlsx名'])
         if program_dict['對應xlsx名'] != '資工':
             ws = workbooks[program_dict['對應xlsx名']].active
-            columns = list(zip(*[[cell for cell in row] for row in ws]))
-            for col_idx, column in enumerate(columns, start = 1):
-                print(f'col_idx = {col_idx}')
-                for row_idx, row in enumerate(column, start = 1):
-                    print(row_idx, row.value)
+            # build table with (ws.max_column * ws.max_row)
+            df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
+            print(df.head(2))
         else:
-            pass
-        break
+            wb = workbooks[program_dict['對應xlsx名']]
+            sheetnames = wb.sheetnames
+            for sheetname in sheetnames:
+                ws = wb[sheetname]
+                df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
+                print(df.head(2))
+                if '四大類' not in sheetname:
+                    pass
+                else:
+                    pass
+            print()
     
     # write json
     pass
