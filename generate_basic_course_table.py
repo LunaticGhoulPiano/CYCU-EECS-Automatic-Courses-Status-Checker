@@ -721,7 +721,7 @@ def get_program_info(path, enroll_year):
     
     # TODO: add CS info of 四大類 into total_dict['資工']
     
-    with open(f'{path}/學程總表.json', 'w', encoding = 'utf-8') as f:
+    with open(f'{path}/各學程之必修_核心_選修總表.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(total_dict, indent = 4, ensure_ascii = False))
 
 def generate_basic_course_table(enroll_year):
@@ -736,4 +736,4 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-generate_basic_course_table('110')
+#generate_basic_course_table('110')

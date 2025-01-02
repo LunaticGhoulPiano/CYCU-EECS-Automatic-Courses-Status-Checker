@@ -11,7 +11,7 @@
 
 ### TODO:
 - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-- 完成```generate_basic_course_table.get_program_info()```中將資工四大類的開課及單/雙主修資工學程的畢業學分條件寫入```./Generated/學程總表.json```
+- 完成```generate_basic_course_table.get_program_info()```中將資工四大類的開課及單/雙主修資工學程的畢業學分條件寫入```./Generated/各學程之必修_核心_選修總表.json```
 - 完成```generate_status_table.py```：
     - 根據歷屆修課與畢業規則產生修課狀態Excel表
 - 完成```generate_future_course_table.py```:
@@ -40,7 +40,7 @@
 │ └──選課系統_總覽.json
 ├──Generated（自動產生）
 │ ├──{入學年度}_基本畢業條件.json
-│ └──學程總表.json
+│ └──各學程之必修_核心_選修總表.json
 │──PDF（自動產生）
 │ ├──電資學士班應修科目表課程地圖.pdf
 │ ├──電機資訊學院學士班修課注意事項.pdf
