@@ -516,7 +516,7 @@ def parse_context(department, program_dict):
             # delete reversed_keys[0] in program_dict['選修']['課程']
             del program_dict['選修']['課程'][reversed_keys[0]]
     
-    # TODO: parse the course name and the credit
+    # parse the course name and the credit
     for cur_type in program_dict.keys():
         if cur_type in ['必修', '核心', '選修']:
             legal_courses_format = {}
@@ -669,6 +669,10 @@ def parse_df_to_dict(df, department):
         department_dict[program] = parse_context(department, program_dict)
     return department_dict
 
+# TODO: set the graduate credit of single major and double major in CS
+def parse_rules_of_single_and_double_cs(cs_dict):
+    return cs_dict
+
 def parse_cs_four_types_df_to_dict(df):
     pass
 
@@ -708,12 +712,14 @@ def get_program_info(path, enroll_year):
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
                 if '四大類' not in sheetname:
                     total_dict[department_name] = parse_df_to_dict(df, department_name)
+                    # TODO: parse CS single major and double major
+                    total_dict[department_name] = parse_rules_of_single_and_double_cs(total_dict[department_name])
                 else:
-                    # TODO: parse CS four types
+                    # TODO: parse 四大類
                     continue
                     total_dict[department_name] = parse_cs_four_types_df_to_dict(df)
     
-    # TODO: add CS info of 四大類 into total_dict['資工']['資訊硬體學程'/'資訊軟體學程'/'資訊應用學程']['選修']['課程']
+    # TODO: add CS info of 四大類 into total_dict['資工']
     
     with open(f'{path}/學程總表.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(total_dict, indent = 4, ensure_ascii = False))
@@ -730,4 +736,4 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-#generate_basic_course_table('110')
+generate_basic_course_table('110')
