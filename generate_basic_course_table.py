@@ -473,10 +473,92 @@ def generate_table(path, enroll_year):
     with open(f'{path}/{enroll_year}_基本畢業條件.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
-def parse_context(department, course_dict):
-    return course_dict
+def chinese_number_to_arabic_number(chinese_number):
+    single = { '零': 0, '一': 1, '二': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9 }
+    units = {'十': 10, '百': 100}
+    
+    arabic_number = 0
+    current_unit_value = 1
+    current_value = 0
 
-def parse_df_to_dict(df, program_name):
+    for char in reversed(chinese_number):
+        if char in single:
+            current_value = single[char]
+            arabic_number += current_value * current_unit_value
+        elif char in units:
+            current_unit_value = units[char]
+            if current_value == 0:
+                arabic_number += current_unit_value
+            current_value = 0
+        else:
+            raise ValueError(f"Invalid character in Chinese number: {char}")
+
+    return arabic_number
+
+def parse_context(department, program_dict):
+    """
+    處理資工和工業的'選修'中key會存在備註的情況
+    ex.1, 資工-資訊硬體學程-選修-課程 -> 切到剩四大類
+    "資訊系必選四大類": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "系統與IC設計自動化(H)": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "※課程列表請見表一": {
+        "學分數": null,
+        "審查備註": ""
+    }
+    ex. 2, 工業-生產管理學程-選修-課程 ->倒數出認列學程選修學分
+    ...
+    },
+    "半導體封裝製造管理3": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "半導體晶圓製造管理3": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "資訊產品製造管理3": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "汽車製造管理3": {
+        "學分數": null,
+        "審查備註": ""
+    },
+    "＊此四門課程，至多可認列一門為學程選修學分": {
+        "學分數": null,
+        "審查備註": ""
+    }
+    """
+    if department == '資工':
+        # filter untill keys are only 四大類
+        del program_dict['選修']['課程']['資訊系必選四大類']
+        del program_dict['選修']['課程']['※課程列表請見表一']
+        # and set the details in get_program_info() after "for department_name in department_names:" loop
+    elif department == '工業':
+        # reversly count
+        reversed_keys = list(reversed(list(program_dict['選修']['課程'].keys())))
+        if '學程選修學分' in reversed_keys[0]: # 會有"＊此四門課程，至多可認列一門為學程選修學分"，就要倒數
+            # split substr between '此' and the first '門', ex. "＊此四門課程，至多可認列一門為學程選修學分" -> '四'
+            chinese_number = reversed_keys[0].split('門')[0].split('此')[1] # ex. chinese_num = '一百五十六'
+            # convert chinese number to arabic number (ex. '四' -> '4')
+            arabic_number = chinese_number_to_arabic_number(chinese_number)
+            # add review comment (i.e. reversed_keys[0]) into those {arabic_number} courses
+            for i in range(1, arabic_number+1):
+                program_dict['選修']['課程'][reversed_keys[i]]['審查備註'] = reversed_keys[0]
+            # delete reversed_keys[0] in program_dict['選修']['課程']
+            del program_dict['選修']['課程'][reversed_keys[0]]
+    
+    # TODO: parse the course name and the credit
+
+    return program_dict
+
+def parse_df_to_dict(df, department):
     # get indices
     ## 各學程名稱所在的column index
     first_row = df.iloc[0, :].values.tolist()
@@ -555,21 +637,17 @@ def parse_df_to_dict(df, program_name):
                                 '最低應修學分數': type_credits[program][cur_type],
                                 '課程': {}
                             }
-                        # TODO: parse context
-                        course = parse_context(program, course)
-                        
-                        # use parsed course name (course[1]) as key and write into program_dict
                         if course[1] is not None:
                             program_dict[cur_type]['課程'][course[1]] = {
                                 '學分數': None,
                                 '審查備註': '；'.join(string for string in strings if string != '')
                             }
             else:
-                # TODO: set review comment
+                # set review comment
                 row_idx = type_dict[cur_type]
                 column_idx = program_indices[program] - 1
                 program_dict['審查備註'] = df.iloc[row_idx, column_idx]
-        department_dict[program] = program_dict
+        department_dict[program] = parse_context(department, program_dict)
     return department_dict
 
 def parse_cs_four_types_df_to_dict(df):
@@ -581,13 +659,13 @@ def get_program_info(path, enroll_year):
     json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
     # read xlsx
     file_names = os.listdir('./Program')
-    program_names = ['資工', '工業', '通訊', '電子', '電機']
+    department_names = ['資工', '工業', '通訊', '電子', '電機']
     try:
         workbooks = {
-            program_name: openpyxl.load_workbook(f'./Program/{file_name}') \
+            department_name: openpyxl.load_workbook(f'./Program/{file_name}') \
             for file_name in file_names \
-                for program_name in program_names \
-                    if program_name in file_name
+                for department_name in department_names \
+                    if department_name in file_name
         }
     except PermissionError as e:
         print('> 錯誤：請先關閉excel檔案！')
@@ -598,22 +676,24 @@ def get_program_info(path, enroll_year):
     
     # read xlsx into df and parse into dict
     total_dict = {}
-    for program_name in program_names:
-        if program_name != '資工':
-            ws = workbooks[program_name].active
+    for department_name in department_names:
+        if department_name != '資工':
+            ws = workbooks[department_name].active
             df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
-            total_dict[program_name] = parse_df_to_dict(df, program_name)
+            total_dict[department_name] = parse_df_to_dict(df, department_name)
         else:
-            wb = workbooks[program_name]
+            wb = workbooks[department_name]
             sheetnames = wb.sheetnames
             for sheetname in sheetnames:
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
                 if '四大類' not in sheetname:
-                    total_dict[program_name] = parse_df_to_dict(df, program_name)
+                    total_dict[department_name] = parse_df_to_dict(df, department_name)
                 else:
-                    continue
-                    program_dict[program_name] = parse_cs_four_types_df_to_dict(df)
+                    # TODO: parse CS four types
+                    program_dict[department_name] = parse_cs_four_types_df_to_dict(df)
+    
+    # TODO: add CS info of 四大類 into total_dict['資工']['資訊硬體學程'/'資訊軟體學程'/'資訊應用學程']['選修']['課程']
     
     with open(f'{path}/學程總表.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(total_dict, indent = 4, ensure_ascii = False))
