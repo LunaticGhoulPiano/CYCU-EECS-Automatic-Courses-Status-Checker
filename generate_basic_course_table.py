@@ -498,7 +498,7 @@ def chinese_number_to_arabic_number(chinese_number):
 def parse_context(department, program_dict):
     """
     處理資工和工業的'選修'中key會存在備註的情況
-    ex.1, 資工-資訊硬體學程-選修-課程 -> 切到剩四大類
+    ex. 1, 資工-資訊硬體學程-選修-課程 -> 切到剩四大類
     "資訊系必選四大類": {
         "學分數": null,
         "審查備註": ""
@@ -555,6 +555,8 @@ def parse_context(department, program_dict):
             del program_dict['選修']['課程'][reversed_keys[0]]
     
     # TODO: parse the course name and the credit
+
+    # TODO: parse the credit of CS single major / double major
 
     return program_dict
 
@@ -691,7 +693,8 @@ def get_program_info(path, enroll_year):
                     total_dict[department_name] = parse_df_to_dict(df, department_name)
                 else:
                     # TODO: parse CS four types
-                    program_dict[department_name] = parse_cs_four_types_df_to_dict(df)
+                    continue
+                    total_dict[department_name] = parse_cs_four_types_df_to_dict(df)
     
     # TODO: add CS info of 四大類 into total_dict['資工']['資訊硬體學程'/'資訊軟體學程'/'資訊應用學程']['選修']['課程']
     
