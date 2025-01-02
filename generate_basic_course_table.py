@@ -473,10 +473,14 @@ def generate_table(path, enroll_year):
     with open(f'{path}/{enroll_year}_基本畢業條件.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
+def parse_context(course_dict):
+    return course_dict
+
 def parse_df_to_dict(df, program_name):
     # get indices
     ## 各學程名稱所在的column index
     first_row = df.iloc[0, :].values.tolist()
+    first_column = df.iloc[:, 0].values.tolist()
     program_indices = { # column indices
         program: idx for idx, program in enumerate(first_row) if program is not None and '學程' in program
     }
@@ -495,52 +499,74 @@ def parse_df_to_dict(df, program_name):
     """
     max_str_len = 5
     type_indices = {} # row indices
-    for program_name, program_idx in program_indices.items():
-        type_indices[program_name] = {}
+    for program, program_idx in program_indices.items():
+        type_indices[program] = {}
         for column_idx, cell in df.iloc[:, program_idx-1].items():
             if (cell is not None) and \
                 ((len(str(cell)) < max_str_len and any(p_type in str(cell) for p_type in ['必修', '核心', '選修'])) \
                     or (len(str(cell)) >= max_str_len)):
-                type_indices[program_name][cell] = int(column_idx) - 1
+                type_indices[program][cell] = int(column_idx) - 1
+
+    # get the credits of each type if is not None else ''
+    type_credits = {}
+    for program, type_dict in type_indices.items():
+        type_credits[program] = {}
+        for type_name, type_idx in type_dict.items():
+            credit_idx = 0 # just for list comprehension's init
+            credit_idx = type_idx + 1 if type_idx + 1 < len(first_column) else type_idx
+            credit = df.iloc[credit_idx, program_indices[program] - 1]
+            if credit is not None:
+                type_credits[program][type_name] = credit
+            else:
+                type_credits[program][type_name] = ''
     
     # get contents by indices
-    contents_of_programs = {}
-    for program_name, type_dict in type_indices.items():
-        contents = {}
+    programs_dict = {}
+    for program, type_dict in type_indices.items():
+        program_dict = {}
         # iterate 必修/核心/選修 by its index
         for cur_type in type_dict.keys():
             if cur_type in ['必修', '核心', '選修']:
                 # get the range of the type
                 row_start_idx = type_dict[cur_type]
                 row_end_idx = list(type_dict.values())[list(type_dict.keys()).index(cur_type) + 1] \
-                    if cur_type != list(type_dict.keys())[-1] else len(df.iloc[:, program_indices[program_name] - 1])
-                course_contents = df.iloc[row_start_idx:row_end_idx, program_indices[program_name]]
+                    if cur_type != list(type_dict.keys())[-1] else len(df.iloc[:, program_indices[program] - 1])
+                course_contents = df.iloc[row_start_idx:row_end_idx, program_indices[program]]
                 
-                # get (審查)備註 of each course in course_contents by program_indices[program_name]
-                column_start_idx = program_indices[program_name] + 1
-                column_end_idx = [program_indices[next_program_name] - 1 if program_name != list(program_indices.keys())[-1] else len(df) - 1 \
-                    for next_program_name in list(program_indices.keys())[list(program_indices.keys()).index(program_name) + 1:]][0] \
-                        if program_name != list(program_indices.keys())[-1] else len(first_row)
+                # get (審查)備註 of each course in course_contents by program_indices[program]
+                column_start_idx = program_indices[program] + 1
+                column_end_idx = [program_indices[next_program] - 1 if program != list(program_indices.keys())[-1] else len(df) - 1 \
+                    for next_program in list(program_indices.keys())[list(program_indices.keys()).index(program) + 1:]][0] \
+                        if program != list(program_indices.keys())[-1] else len(first_row)
                 review_comment_contents = df.iloc[row_start_idx:row_end_idx, column_start_idx:column_end_idx]
                 if len(course_contents) != len(review_comment_contents):
-                    print(f'>  錯誤：{program_name} {cur_type} 的課程數量與對應的(審核)備註數量不一致！')
+                    print(f'>  錯誤：{program} {cur_type} 的課程數量與對應的(審核)備註數量不一致！')
                     return None
                 else:
-                    contents[cur_type] = {
-                        'course_contents': course_contents,
-                        'review_comment_contents': review_comment_contents
-                    }
-        contents_of_programs[program_name] = contents
-    
-    # get context(str) of each cell into dictionary
-    program_dict = {}
-    for key, value in contents_of_programs.items():
-        pass
-
-    # parse context
-
-    # return
-    print('-----------------------------------------')
+                    # TODO: get context(str) of each cell into dictionary
+                    course_dict = {}
+                    for idx, course in enumerate(course_contents.items()):
+                        # merge all cells in review_comment_contents into one string
+                        # Replace None with '' and merge all cells into one string
+                        strings = [value if value is not None else '' \
+                            for value in review_comment_contents.iloc[idx, :].values]
+                        # TODO: parse context
+                        if cur_type not in program_dict:
+                            program_dict[cur_type] = {
+                                '最低應修學分數': type_credits[program][cur_type],
+                                '課程': {}
+                            }
+                        program_dict[cur_type]['課程'][course[1]] = {
+                            '學分數': None,
+                            '審查備註': '；'.join(string for string in strings if string != '')
+                        }
+            else:
+                # TODO: set review comment
+                row_idx = type_dict[cur_type]
+                column_idx = program_indices[program] - 1
+                program_dict['審查備註'] = df.iloc[row_idx, column_idx]
+        programs_dict[program] = program_dict
+    return program_dict
 
 def parse_cs_four_types_df_to_dict(df):
     pass
@@ -586,21 +612,8 @@ def get_program_info(path, enroll_year):
                 else:
                     #df.to_csv(f'./temp/{program_name}四大類.csv', index = False, encoding = 'utf-8')
                     program_dict[program_name] = parse_cs_four_types_df_to_dict(df)
-        #break
-
-    return
-    # iterate each programs
-    for program_name, program_dict in json_dict['學系選修']['學程細項'].items():
-        # read xlsx and set 必修/核心/選修/資工四大類
-        print(program_dict['對應xlsx名'])
-        continue
-        if program_dict['對應xlsx名'] != '資工':
-            pass
-        else:
-            pass
-    
-    # write json
-    pass
+        with open(f'{program_name}.json', 'w', encoding = 'utf-8') as f:
+            f.write(json.dumps(program_dict[program_name], indent = 4, ensure_ascii = False))
 
 def generate_basic_course_table(enroll_year):
     path = './Generated'
@@ -610,8 +623,8 @@ def generate_basic_course_table(enroll_year):
     if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
         if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
             return
+    
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
 #generate_basic_course_table('110')
-get_program_info('./Generated', '110')

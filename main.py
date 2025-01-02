@@ -77,5 +77,4 @@ if __name__ == "__main__":
             with open(ENV_PATH, 'w', encoding = 'utf-8') as f:
                 f.write('USR_ID=\n')
                 f.write('USR_PWD=\n')
-                f.write('CHATGPT_API_KEY=\n')
     main()
