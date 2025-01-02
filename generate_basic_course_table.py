@@ -473,7 +473,7 @@ def generate_table(path, enroll_year):
     with open(f'{path}/{enroll_year}_基本畢業條件.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(json_dict, indent = 4, ensure_ascii = False))
 
-def parse_context(course_dict):
+def parse_context(department, course_dict):
     return course_dict
 
 def parse_df_to_dict(df, program_name):
@@ -521,7 +521,7 @@ def parse_df_to_dict(df, program_name):
                 type_credits[program][type_name] = ''
     
     # get contents by indices
-    programs_dict = {}
+    department_dict = {}
     for program, type_dict in type_indices.items():
         program_dict = {}
         # iterate 必修/核心/選修 by its index
@@ -543,30 +543,34 @@ def parse_df_to_dict(df, program_name):
                     print(f'>  錯誤：{program} {cur_type} 的課程數量與對應的(審核)備註數量不一致！')
                     return None
                 else:
-                    # TODO: get context(str) of each cell into dictionary
+                    # get context(str) of each cell into dictionary
                     course_dict = {}
                     for idx, course in enumerate(course_contents.items()):
                         # merge all cells in review_comment_contents into one string
                         # Replace None with '' and merge all cells into one string
                         strings = [value if value is not None else '' \
                             for value in review_comment_contents.iloc[idx, :].values]
-                        # TODO: parse context
                         if cur_type not in program_dict:
                             program_dict[cur_type] = {
                                 '最低應修學分數': type_credits[program][cur_type],
                                 '課程': {}
                             }
-                        program_dict[cur_type]['課程'][course[1]] = {
-                            '學分數': None,
-                            '審查備註': '；'.join(string for string in strings if string != '')
-                        }
+                        # TODO: parse context
+                        course = parse_context(program, course)
+                        
+                        # use parsed course name (course[1]) as key and write into program_dict
+                        if course[1] is not None:
+                            program_dict[cur_type]['課程'][course[1]] = {
+                                '學分數': None,
+                                '審查備註': '；'.join(string for string in strings if string != '')
+                            }
             else:
                 # TODO: set review comment
                 row_idx = type_dict[cur_type]
                 column_idx = program_indices[program] - 1
                 program_dict['審查備註'] = df.iloc[row_idx, column_idx]
-        programs_dict[program] = program_dict
-    return program_dict
+        department_dict[program] = program_dict
+    return department_dict
 
 def parse_cs_four_types_df_to_dict(df):
     pass
@@ -593,13 +597,12 @@ def get_program_info(path, enroll_year):
         return
     
     # read xlsx into df and parse into dict
-    program_dict = {}
+    total_dict = {}
     for program_name in program_names:
         if program_name != '資工':
             ws = workbooks[program_name].active
             df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
-            #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
-            program_dict[program_name] = parse_df_to_dict(df, program_name)
+            total_dict[program_name] = parse_df_to_dict(df, program_name)
         else:
             wb = workbooks[program_name]
             sheetnames = wb.sheetnames
@@ -607,13 +610,13 @@ def get_program_info(path, enroll_year):
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
                 if '四大類' not in sheetname:
-                    #df.to_csv(f'./temp/{program_name}.csv', index = False, encoding = 'utf-8')
-                    program_dict[program_name] = parse_df_to_dict(df, program_name)
+                    total_dict[program_name] = parse_df_to_dict(df, program_name)
                 else:
-                    #df.to_csv(f'./temp/{program_name}四大類.csv', index = False, encoding = 'utf-8')
+                    continue
                     program_dict[program_name] = parse_cs_four_types_df_to_dict(df)
-        with open(f'{program_name}.json', 'w', encoding = 'utf-8') as f:
-            f.write(json.dumps(program_dict[program_name], indent = 4, ensure_ascii = False))
+    
+    with open(f'{path}/學程總表.json', 'w', encoding = 'utf-8') as f:
+        f.write(json.dumps(total_dict, indent = 4, ensure_ascii = False))
 
 def generate_basic_course_table(enroll_year):
     path = './Generated'
@@ -627,4 +630,4 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-#generate_basic_course_table('110')
+generate_basic_course_table('110')
