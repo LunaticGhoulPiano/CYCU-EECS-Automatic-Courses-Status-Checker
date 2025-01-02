@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import json
 import openpyxl
 import pandas as pd
@@ -496,45 +497,6 @@ def chinese_number_to_arabic_number(chinese_number):
     return arabic_number
 
 def parse_context(department, program_dict):
-    """
-    處理資工和工業的'選修'中key會存在備註的情況
-    ex. 1, 資工-資訊硬體學程-選修-課程 -> 切到剩四大類
-    "資訊系必選四大類": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "系統與IC設計自動化(H)": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "※課程列表請見表一": {
-        "學分數": null,
-        "審查備註": ""
-    }
-    ex. 2, 工業-生產管理學程-選修-課程 ->倒數出認列學程選修學分
-    ...
-    },
-    "半導體封裝製造管理3": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "半導體晶圓製造管理3": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "資訊產品製造管理3": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "汽車製造管理3": {
-        "學分數": null,
-        "審查備註": ""
-    },
-    "＊此四門課程，至多可認列一門為學程選修學分": {
-        "學分數": null,
-        "審查備註": ""
-    }
-    """
     if department == '資工':
         # filter untill keys are only 四大類
         del program_dict['選修']['課程']['資訊系必選四大類']
@@ -555,7 +517,62 @@ def parse_context(department, program_dict):
             del program_dict['選修']['課程'][reversed_keys[0]]
     
     # TODO: parse the course name and the credit
-
+    for cur_type in program_dict.keys():
+        if cur_type in ['必修', '核心', '選修']:
+            legal_courses_format = {}
+            #print(program_dict[cur_type]['課程'])
+            prev_course = None
+            prev_info = None
+            for course, info in program_dict[cur_type]['課程'].items():
+                # remove illegal characters in the first and the last char
+                formatted_course = re.sub(r'^[^\u4e00-\u9fffA-Za-z0-9]+', '', course) # judge first char is legal
+                formatted_course = re.sub(r'[^\u4e00-\u9fffA-Za-z0-9\)）]+$', '', formatted_course) # judge last char is legal
+                # if no 資工四大類, set credits and review comments
+                if not(cur_type == '選修' and department == '資工'):
+                    # set credit
+                    match_arabic_number = re.search(r'(\d+)$', formatted_course)
+                    if match_arabic_number:
+                        info['學分數'] = match_arabic_number.group(1) # set credit
+                        formatted_course = formatted_course[:match_arabic_number.start()].strip() # remove arabic number in course name
+                    else:
+                        info['學分數'] = ''
+                    # set review comment
+                    if department == '通訊':
+                        # deal with formatted_course.endswith('(電子系)') or formatted_course.endswith('(電機系)')
+                        match_department = re.search(r'\((電子系|電機系)\)$', formatted_course)
+                        if match_department:
+                            # set department of course
+                            match_part = match_department.group(0) # ex. '(電子系)'
+                            department_of_course = match_part.replace('(', '').replace(')', '').rstrip() # ex. '電子系'
+                            formatted_course = formatted_course[:-len(match_part)].rstrip() # ex. '通訊系統3(電子系)' -> '通訊系統3'
+                            info['審查備註'] = f'開課學系：{department_of_course}'
+                            # set credit
+                            match_arabic_number = re.search(r'(\d+)$', formatted_course)
+                            if match_arabic_number:
+                                info['學分數'] = match_arabic_number.group(1) # set credit
+                                formatted_course = formatted_course[:match_arabic_number.start()].strip() # remove arabic number in course name
+                            else: # ex. original formatted_course = '通訊系統(電子系)'
+                                info['學分數'] = ''
+                        # deal with '或'
+                        if formatted_course.startswith('或') and prev_course:
+                            # -----------------------WARNING: 只能處理有一個'或'的情況, 即一次有兩門可以互相替換, 如果超過三門可以替換就會出錯-----------------------
+                            # delete '或' in formatted_course
+                            formatted_course = formatted_course.replace('或', '')
+                            # set review comment
+                            info['審查備註'] = info['審查備註'] + f'；可替換{prev_course}' if info['審查備註'] else f'可替換{prev_course}'
+                            prev_info['審查備註'] = prev_info['審查備註'] + f'；可替換{formatted_course}' if prev_info['審查備註'] \
+                                else f'可替換{formatted_course}'
+                            # update previous course in legal_courses_format
+                            legal_courses_format[prev_course] = prev_info
+                            # reset prev_course and prev_info
+                            prev_course = None
+                            prev_info = None
+                # store the current course info
+                legal_courses_format[formatted_course] = info
+                # update previous course and previous info
+                prev_course = formatted_course
+                prev_info = info
+            program_dict[cur_type]['課程'] = legal_courses_format
     # TODO: parse the credit of CS single major / double major
 
     return program_dict
@@ -713,4 +730,4 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-generate_basic_course_table('110')
+#generate_basic_course_table('110')
