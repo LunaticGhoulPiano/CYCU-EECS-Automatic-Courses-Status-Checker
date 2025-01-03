@@ -573,8 +573,6 @@ def parse_context(department, program_dict):
                 prev_course = formatted_course
                 prev_info = info
             program_dict[cur_type]['課程'] = legal_courses_format
-    # TODO: parse the credit of CS single major / double major
-
     return program_dict
 
 def parse_df_to_dict(df, department):
@@ -685,11 +683,30 @@ def extract_number_between_keywords(text, start_keyword, end_keyword):
 def parse_rules_of_single_and_double_cs(cs_dict):
     credit_mapping = {
         '單資工': {
-            '核心': 0
+            '必修': {
+                '資訊硬體學程': 0,
+                '資訊軟體學程': 0,
+                '資訊應用學程': 0
+            },
+            '核心': None
         },
         '雙資工': {
-            '選修各學程': 0,
-            '選修總共': 0
+            '必修+核心': {
+                '資訊硬體學程+資訊軟體學程': {
+                    'set': set(),
+                    'credit': 0
+                },
+                '資訊硬體學程+資訊應用學程': {
+                    'set': set(),
+                    'credit': 0
+                },
+                '資訊軟體學程+資訊應用學程': {
+                    'set': set(),
+                    'credit': 0
+                },
+            },
+            '選修各學程': None,
+            '選修總共': None
         }
     }
 
@@ -705,7 +722,30 @@ def parse_rules_of_single_and_double_cs(cs_dict):
                     elif '擇兩個以上修習者' in string:
                         credit_mapping['雙資工']['選修各學程'] = extract_number_between_keywords(string, '至少各', '學分')
                         credit_mapping['雙資工']['選修總共'] = extract_number_between_keywords(string, '須達', '學分以上')
-    cs_dict['四大類最低應修學分數'] = credit_mapping
+            elif cur_type == '必修' or cur_type == '核心':
+                if cur_type == '必修':
+                    for course, course_dict in contents['課程'].items():
+                        # set single major: 必修都要全修, 核心不用全修, 選修不用修
+                        credit_mapping['單資工'][cur_type][program] += int(course_dict['學分數'])
+                # set double major: 必修+核心都要全修, 選修不用全修
+                for double_major, double_major_dict in credit_mapping['雙資工']['必修+核心'].items():
+                    if program in double_major:
+                        for course, course_dict in contents['課程'].items():
+                            if course not in double_major_dict['set']:
+                                double_major_dict['set'].add(course)
+                                double_major_dict['credit'] += int(course_dict['學分數'])
+    
+    # change type of credit from int into str
+    for major, contents in credit_mapping.items():
+        for cur_type, program_dict in contents.items():
+            if major == '單資工' and cur_type == '必修':
+                for program, credit in program_dict.items():
+                    credit_mapping[major][cur_type][program] = str(credit)
+            elif major == '雙資工' and cur_type == '必修+核心':
+                for double_major, double_major_dict in contents[cur_type].items():
+                    credit_mapping[major][cur_type][double_major] = str(double_major_dict['credit'])
+    
+    cs_dict['最低應修學分數'] = credit_mapping
     return cs_dict
 
 def parse_cs_four_types_df_to_dict(df, total_dict):
@@ -721,11 +761,13 @@ def parse_cs_four_types_df_to_dict(df, total_dict):
     # TODO: write into total_dict
     four_classes = { '審查備註': None }
     for column_idx in range(start_column_idx, end_column_idx):
+        type_column_idx = None
         for row_idx in range(start_row_idx, end_row_idx):
             if df.iloc[row_idx, column_idx]:
                 cell = str(df.iloc[row_idx, column_idx])
                 en_code = re.match(r'^[A-Za-z]+$', cell)
                 if '、' in cell:
+                    type_column_idx = column_idx
                     type_name = cell.split('、')[1].strip()
                     four_classes[type_name] = {
                         '四大類代碼': None,
@@ -743,22 +785,34 @@ def parse_cs_four_types_df_to_dict(df, total_dict):
                         four_classes['審查備註'] += cell
                     else:
                         four_classes['審查備註'] += f'；{cell}'
-                else:
-                    # fix mis-spelled 'malab' and uppercase the first letter
-                    if re.match(r'^malab', cell):
-                        cell = cell.replace('malab', 'Matlab')
-                    elif re.match(r'^ios', cell):
-                        cell = cell.replace('ios', 'IOS')
-                    four_classes[type_name]['課程'].append(cell)
+                elif type_column_idx == column_idx:
+                    # remove illegal characters in the beginning and end
+                    cell = re.sub(r'^[^\u4e00-\u9fff.A-Za-z0-9]+', '', cell)
+                    cell = re.sub(r'[^\u4e00-\u9fffA-Za-z0-9\)）]+$', '', cell)
+                    if cell != '課程名稱':
+                        # fix mis-spelled and uppercase the first letter
+                        match = re.match(r'^malab', cell)
+                        if match:
+                            cell = cell.replace(match.group(0), 'Matlab')
+                        match = re.match(r'^iOS', cell)
+                        if match:
+                            cell = cell.replace(match.group(0), 'IOS')
+                        four_classes[type_name]['課程'].append(cell)
+                # else will be ignored (may be unformatted review comments)
     total_dict['資工']['四大類'] = four_classes
 
     # set program's four types of CS major
-    total_dict['資工']['四大類']['最低應修學分數'] = total_dict['資工']['四大類最低應修學分數']
-    del total_dict['資工']['四大類最低應修學分數']
-
+    for program in ['資訊硬體學程', '資訊軟體學程', '資訊應用學程']:
+        type_names = list(total_dict['資工'][program]['選修']['課程'].keys())
+        total_dict['資工'][program]['選修']['認列四大類'] = {}
+        for type_name in type_names:
+            match = re.match(r'(.*)\(([^()]*)\)$', type_name)
+            if match:
+                total_dict['資工'][program]['選修']['認列四大類'][match.group(1)] = match.group(2)
+        del total_dict['資工'][program]['選修']['課程']
     return total_dict
 
-# TODO: read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
+# read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
 def get_program_info(path, enroll_year):
     # load json
     json_dict = json.load(open(f'{path}/{enroll_year}_基本畢業條件.json', 'r', encoding = 'utf-8'))
@@ -795,10 +849,10 @@ def get_program_info(path, enroll_year):
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
                 if '四大類' not in sheetname:
                     total_dict[department_name] = parse_df_to_dict(df, department_name)
-                    # TODO: parse CS single major and double major
+                    # parse CS single major and double major
                     total_dict[department_name] = parse_rules_of_single_and_double_cs(total_dict[department_name])
                 else:
-                    # TODO: parse 四大類
+                    # parse 四大類
                     total_dict = parse_cs_four_types_df_to_dict(df, total_dict)
     
     with open(f'{path}/各學程之必修_核心_選修總表.json', 'w', encoding = 'utf-8') as f:
@@ -815,5 +869,3 @@ def generate_basic_course_table(enroll_year):
     
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
-
-generate_basic_course_table('110')
