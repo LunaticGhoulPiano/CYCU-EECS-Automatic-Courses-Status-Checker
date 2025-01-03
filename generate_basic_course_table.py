@@ -692,11 +692,8 @@ def parse_rules_of_single_and_double_cs(cs_dict):
             '選修總共': 0
         }
     }
-    hardware_software_application_must = set()
-    hardware_application_application_must = set()
-    software_application_application_must = set()
-    
-    # calculate credits using set to ensure will not calculate same course twice
+
+    # set graduate credit
     for program, program_dict in cs_dict.items():
         for cur_type, contents in program_dict.items():
             if cur_type == '審查備註' and contents is not None:
