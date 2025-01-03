@@ -4,8 +4,7 @@ from dotenv import load_dotenv, set_key
 from get_student_data import login, get_student_data
 from get_files import get_files
 from generate_basic_course_table import generate_basic_course_table
-from generate_status_table import generate_status_table
-from generate_future_course_table import generate_future_course_table
+from generate_info import generate_info
 
 ENV_PATH = '.env'
 
@@ -63,12 +62,8 @@ def main():
     get_files(usr.enroll_year)
     print('> 正在產生畢業應修科目表...')
     generate_basic_course_table(usr.enroll_year)
-    # TODO
     print('> 正在產生修課狀態表...')
-    generate_status_table(usr.enroll_year)
-    return
-    print('> 正在產生預排課表...')
-    generate_future_course_table(usr.enroll_year)
+    generate_info(usr.enroll_year)
     print('> 正在結束系統...')
 
 if __name__ == "__main__":
