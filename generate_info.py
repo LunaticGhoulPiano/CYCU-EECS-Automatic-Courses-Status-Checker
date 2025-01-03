@@ -10,14 +10,18 @@ def load_file(file_path, file_name):
         print(f'> 錯誤：\"./{file_path}/{file_name}\"不存在！')
         return None
 
+# TODO: generate status
 def generate_status_table(historical_courses, basic_rules, credit_details):
     pass
-    # build df and judge/set status
+    # build df and set courses
+
+    # judge and set status
     
     # create xlsx file
 
     # write xlsx file
 
+# TODO : generate future table if file exist
 def generate_future_course_table():
     pass
 

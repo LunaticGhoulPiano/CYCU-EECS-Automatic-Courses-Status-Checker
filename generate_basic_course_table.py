@@ -679,7 +679,7 @@ def extract_number_between_keywords(text, start_keyword, end_keyword):
         return match.group(1)
     return None
 
-# TODO: set the graduate credit of single major and double major in CS
+# et the graduate credit of single major and double major in CS
 def parse_rules_of_single_and_double_cs(cs_dict):
     credit_mapping = {
         '單資工': {
@@ -749,7 +749,7 @@ def parse_rules_of_single_and_double_cs(cs_dict):
     return cs_dict
 
 def parse_cs_four_types_df_to_dict(df, total_dict):
-    # TODO: read '四大類'
+    # read '四大類'
     start_row_idx = 1
     start_column_idx = 0
     end_row_idx, end_column_idx = df.shape
@@ -758,7 +758,7 @@ def parse_cs_four_types_df_to_dict(df, total_dict):
     while df.iloc[:, end_column_idx - 1].isnull().all():
         end_column_idx -= 1
     
-    # TODO: write into total_dict
+    # write into total_dict
     four_classes = { '審查備註': None }
     for column_idx in range(start_column_idx, end_column_idx):
         type_column_idx = None
