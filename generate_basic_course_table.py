@@ -652,10 +652,15 @@ def parse_df_to_dict(df, department):
                         strings = [value if value is not None else '' \
                             for value in review_comment_contents.iloc[idx, :].values]
                         if cur_type not in program_dict:
-                            program_dict[cur_type] = {
-                                '最低應修學分數': type_credits[program][cur_type],
-                                '課程': {}
-                            }
+                            if department == '資工':
+                                program_dict[cur_type] = {
+                                    '課程': {}
+                                }
+                            else:
+                                program_dict[cur_type] = {
+                                    '最低應修學分數': type_credits[program][cur_type],
+                                    '課程': {}
+                                }
                         if course[1] is not None:
                             program_dict[cur_type]['課程'][course[1]] = {
                                 '學分數': None,
@@ -669,8 +674,41 @@ def parse_df_to_dict(df, department):
         department_dict[program] = parse_context(department, program_dict)
     return department_dict
 
+def extract_number_between_keywords(text, start_keyword, end_keyword):
+    pattern = rf'{start_keyword}.*?(\d+).*?{end_keyword}'
+    match = re.search(pattern, text)
+    if match:
+        return match.group(1)
+    return None
+
 # TODO: set the graduate credit of single major and double major in CS
 def parse_rules_of_single_and_double_cs(cs_dict):
+    credit_mapping = {
+        '單資工': {
+            '核心': 0
+        },
+        '雙資工': {
+            '選修各學程': 0,
+            '選修總共': 0
+        }
+    }
+    hardware_software_application_must = set()
+    hardware_application_application_must = set()
+    software_application_application_must = set()
+    
+    # calculate credits using set to ensure will not calculate same course twice
+    for program, program_dict in cs_dict.items():
+        for cur_type, contents in program_dict.items():
+            if cur_type == '審查備註' and contents is not None:
+                # set graduate credit
+                strings = contents.split('\n')
+                for string in strings:
+                    if '擇一修習者' in string:
+                        credit_mapping['單資工']['核心'] = extract_number_between_keywords(string, '核心課程中修畢至少', '學分')
+                    elif '擇兩個以上修習者' in string:
+                        credit_mapping['雙資工']['選修各學程'] = extract_number_between_keywords(string, '至少各', '學分')
+                        credit_mapping['雙資工']['選修總共'] = extract_number_between_keywords(string, '須達', '學分以上')
+    cs_dict['四大類最低應修學分數'] = credit_mapping
     return cs_dict
 
 def parse_cs_four_types_df_to_dict(df):
@@ -717,7 +755,7 @@ def get_program_info(path, enroll_year):
                 else:
                     # TODO: parse 四大類
                     continue
-                    total_dict[department_name] = parse_cs_four_types_df_to_dict(df)
+                    total_dict['資工四大類'] = parse_cs_four_types_df_to_dict(df)
     
     # TODO: add CS info of 四大類 into total_dict['資工']
     
@@ -736,4 +774,4 @@ def generate_basic_course_table(enroll_year):
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)
 
-#generate_basic_course_table('110')
+generate_basic_course_table('110')
