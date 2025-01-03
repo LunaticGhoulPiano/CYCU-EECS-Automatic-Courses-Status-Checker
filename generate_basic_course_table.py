@@ -708,8 +708,12 @@ def parse_rules_of_single_and_double_cs(cs_dict):
     cs_dict['四大類最低應修學分數'] = credit_mapping
     return cs_dict
 
-def parse_cs_four_types_df_to_dict(df):
-    pass
+def parse_cs_four_types_df_to_dict(df, total_dict):
+    # TODO: read '四大類'
+
+    # TODO: write into total_dict
+    
+    return total_dict
 
 # TODO: read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
 def get_program_info(path, enroll_year):
@@ -742,6 +746,7 @@ def get_program_info(path, enroll_year):
         else:
             wb = workbooks[department_name]
             sheetnames = wb.sheetnames
+            sorted_sheetnames = sorted(sheetnames, key = lambda name: '四大類' in name) # sort sheetname that has '四大類' to the last
             for sheetname in sheetnames:
                 ws = wb[sheetname]
                 df = pd.DataFrame(ws.values, columns = [str(i) for i in range(1, ws.max_column + 1)], index = [str(i) for i in range(1, ws.max_row + 1)])
@@ -751,10 +756,7 @@ def get_program_info(path, enroll_year):
                     total_dict[department_name] = parse_rules_of_single_and_double_cs(total_dict[department_name])
                 else:
                     # TODO: parse 四大類
-                    continue
-                    total_dict['資工四大類'] = parse_cs_four_types_df_to_dict(df)
-    
-    # TODO: add CS info of 四大類 into total_dict['資工']
+                    total_dict = parse_cs_four_types_df_to_dict(df, total_dict)
     
     with open(f'{path}/各學程之必修_核心_選修總表.json', 'w', encoding = 'utf-8') as f:
         f.write(json.dumps(total_dict, indent = 4, ensure_ascii = False))
