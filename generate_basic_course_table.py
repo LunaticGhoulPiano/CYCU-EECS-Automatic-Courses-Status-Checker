@@ -710,9 +710,52 @@ def parse_rules_of_single_and_double_cs(cs_dict):
 
 def parse_cs_four_types_df_to_dict(df, total_dict):
     # TODO: read '四大類'
-
-    # TODO: write into total_dict
+    start_row_idx = 1
+    start_column_idx = 0
+    end_row_idx, end_column_idx = df.shape
+    while df.iloc[end_row_idx - 1, :].isnull().all():
+        end_row_idx -= 1
+    while df.iloc[:, end_column_idx - 1].isnull().all():
+        end_column_idx -= 1
     
+    # TODO: write into total_dict
+    four_classes = { '審查備註': None }
+    for column_idx in range(start_column_idx, end_column_idx):
+        for row_idx in range(start_row_idx, end_row_idx):
+            if df.iloc[row_idx, column_idx]:
+                cell = str(df.iloc[row_idx, column_idx])
+                en_code = re.match(r'^[A-Za-z]+$', cell)
+                if '、' in cell:
+                    type_name = cell.split('、')[1].strip()
+                    four_classes[type_name] = {
+                        '四大類代碼': None,
+                        '課程': []
+                    }
+                elif en_code:
+                    four_classes[type_name]['四大類代碼'] = cell
+                elif '※' in cell:
+                    # delete illegal characters in the beginning and end in the string
+                    pattern = r'^[^\u4e00-\u9fffA-Za-z]+|[^\u4e00-\u9fffA-Za-z]+$'
+                    cell = re.sub(pattern, '', cell)
+                    if not four_classes['審查備註']:
+                        four_classes['審查備註'] = '※'
+                    if four_classes['審查備註'] == '※':
+                        four_classes['審查備註'] += cell
+                    else:
+                        four_classes['審查備註'] += f'；{cell}'
+                else:
+                    # fix mis-spelled 'malab' and uppercase the first letter
+                    if re.match(r'^malab', cell):
+                        cell = cell.replace('malab', 'Matlab')
+                    elif re.match(r'^ios', cell):
+                        cell = cell.replace('ios', 'IOS')
+                    four_classes[type_name]['課程'].append(cell)
+    total_dict['資工']['四大類'] = four_classes
+
+    # set program's four types of CS major
+    total_dict['資工']['四大類']['最低應修學分數'] = total_dict['資工']['四大類最低應修學分數']
+    del total_dict['資工']['四大類最低應修學分數']
+
     return total_dict
 
 # TODO: read xlsx files from './Program' and generate corresponding 必修/核心/選修 into json file
