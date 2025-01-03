@@ -63,11 +63,11 @@ def main():
     get_files(usr.enroll_year)
     print('> 正在產生畢業應修科目表...')
     generate_basic_course_table(usr.enroll_year)
-    return
     # TODO
     print('> 正在產生修課狀態表...')
     generate_status_table(usr.enroll_year)
-    print('> 正在產生未修課狀態表...')
+    return
+    print('> 正在產生預排課表...')
     generate_future_course_table(usr.enroll_year)
     print('> 正在結束系統...')
 
