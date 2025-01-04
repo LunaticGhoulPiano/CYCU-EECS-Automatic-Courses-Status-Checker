@@ -3,7 +3,8 @@ import os
 import json
 import requests
 
-URL = 'https://myself.cycu.edu.tw'
+MYSELF_URL = 'https://myself.cycu.edu.tw'
+MYMENTOR_URL = 'https://cmap.cycu.edu.tw:8443/MyMentor' # TODO: '/index.do' -> '/stdLogin.do' -> '/courseHistory.do' and save as html
 HEADERS = {'Content-Type': 'application/json',
            'User-Agent': 'CourseSelector/1.0',
            'Accept': '*/*',
@@ -11,7 +12,7 @@ HEADERS = {'Content-Type': 'application/json',
 
 def login(usr_id, usr_pwd):
     try:
-        response = requests.post(url = URL + '/auth/myselfLogin',
+        response = requests.post(url = MYSELF_URL + '/auth/myselfLogin',
                                 data = json.dumps({'UserNm': usr_id, 'UserPasswd': usr_pwd}),
                                 headers = HEADERS)
         response.raise_for_status() # ensure response is 200
@@ -26,7 +27,7 @@ def login(usr_id, usr_pwd):
     return response.json()['loginToken'], response.cookies
 
 def authenticate(cookies, authApi):
-    response = requests.post(url = URL + '/baseinfo',
+    response = requests.post(url = MYSELF_URL + '/baseinfo',
                             data = json.dumps({'authUrl': '/myself_api_127',
                                                'authApi': authApi}),
                             headers = HEADERS,
@@ -38,7 +39,7 @@ def authenticate(cookies, authApi):
     return msg["APP_AUTH_token"], cookies
 
 def get_json(login_token, auth_token, cookies, tgt_url, method):
-    response = requests.post(url = URL + tgt_url,
+    response = requests.post(url = MYSELF_URL + tgt_url,
                             data = json.dumps({'APP_AUTH_token': auth_token}),
                             headers = HEADERS,
                             cookies = cookies,
