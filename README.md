@@ -31,8 +31,8 @@
 ├──get_student_data.py
 ├──get_files.py
 ├──generate_basic_course_table.py
-├──generate_status_table.py
-├──generate_future_course_table.py
+├──generate_info.py
+├──student_info.py
 ├──CYCU-Myself（自動產生）
 │ ├──歷年修課.json
 │ ├──選課系統_追蹤清單.json

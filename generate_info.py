@@ -2,6 +2,7 @@
 import os
 import json
 import openpyxl
+from student_info import StudentInfo
 
 def load_file(file_path, file_name):
     if os.path.exists(file_path):
@@ -36,4 +37,4 @@ def generate_info(enroll_year):
         ## load files
         ## generate future table in new worksheet (in the same workbook)
 
-#generate_info('110')
+generate_info('110')
