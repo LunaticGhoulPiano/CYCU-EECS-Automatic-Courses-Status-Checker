@@ -11,7 +11,7 @@
 
 ### TODO:
 - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-- 找到一個方法爬到課程對應的性質（不要用Selenium）
+- 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/stdLogin.do)爬到課程對應的性質
 - ~~在```get_student_data.py```新增爬取網頁並保存為html檔到```./CYCU-Myself```以供後續設定json檔未提供的"課程性質"（如輔雙跨就微等）~~
 - 完成```generate_info.py```與```student_info.py```：
     - ```student_info.py```負責read、parse、format所有資料並寫入此class
