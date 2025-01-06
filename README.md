@@ -57,8 +57,14 @@
 ### 執行
 - Python：
     1. git clone到你的電腦：
-        ```git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git```
+    ```
+    git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
+    ```
     2. 安裝所需libraries：
-    ```pip install -r requirements.txt```
+    ```
+    pip install -r requirements.txt
+    ```
     3. 執行：
-    ```python main.py```
+    ```
+    python main.py
+    ```
