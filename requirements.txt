@@ -1,7 +1,8 @@
-re
+regex
 pandas
 python-dotenv
 requests
 fake-useragent
 beautifulsoup4
 openpyxl
+playwright
