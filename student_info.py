@@ -2,6 +2,7 @@
 import os
 import re
 import json
+from html.parser import HTMLParser
 
 def format_string(string):
     return string
