@@ -61,29 +61,29 @@
         git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
         ```
     2. 安裝所需libraries：
-        Windows:
-        ```
-        python -m pip install -r requirements.txt
-        ```
-        macOS / Linux:
-        ```
-        python3 -m pip install -r requirements.txt
-        ```
+        - Windows:
+            ```
+            python -m pip install -r requirements.txt
+            ```
+        - macOS / Linux:
+            ```
+            python3 -m pip install -r requirements.txt
+            ```
     3. 安裝```playwright```所需瀏覽器（本次使用Chromium）：
-        Windows:
-        ```
-        python -m playwright install
-        ```
-        macOS / Linux:
-        ```
-        python3 -m playwright install
-        ```
+        - Windows:
+            ```
+            python -m playwright install
+            ```
+        - macOS / Linux:
+            ```
+            python3 -m playwright install
+            ```
     4. 執行：
-        Windows:
-        ```
-        python main.py
-        ```
-        macOS / Linux:
-        ```
-        python3 main.py
-        ```
+        - Windows:
+            ```
+            python main.py
+            ```
+        - macOS / Linux:
+            ```
+            python3 main.py
+            ```
