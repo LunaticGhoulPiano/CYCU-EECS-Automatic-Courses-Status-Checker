@@ -7,10 +7,6 @@ from bs4 import BeautifulSoup
 class StudentInfo:
     # init
     def __init__(self, enroll_year, basic_rules, credit_details):
-        # get inputs
-        self.basic_rules = basic_rules
-        self.credit_details = credit_details
-        # infos
         self.name = '' # 學生姓名
         self.class_id = '' # 班級代碼
         self.class_name = '' # 班級名稱
@@ -28,14 +24,12 @@ class StudentInfo:
         self.chosed_courses = [] # 已選上的課程清單
         self.register_list = [] # 登記清單
         self.track_list = [] # 追蹤清單
+        self.basic_rules = basic_rules # 基本畢業條件
+        self.credit_details = credit_details # 各學程之必修/核心/選修
     
     # read files
-    def read(self, historical_courses, basic_user_info, total_overview, course_properties):
-        historical_courses = historical_courses
-        basic_user_info = basic_user_info
-        total_overview = total_overview
-        course_properties = BeautifulSoup(course_properties, 'html.parser')
-        # 選課系統_基本資料.json (i.e. self.basic_user_info)
+    def read(self, basic_user_info, historical_courses, total_overview, course_properties):
+        # 選課系統_基本資料.json (basic_user_info)
         basic_info = basic_user_info['st_info'][0]
         self.name = basic_info['STMD_NAME'].strip()
         self.class_id = basic_info['STMD_CUR_DPT'].strip()
@@ -44,20 +38,21 @@ class StudentInfo:
         self.survey_finish_rate = basic_info['SURVEY_FINISH_RATE'].strip() + '%'
         self.cross_bits = [name.strip() for temp_dict in basic_info['CROSS_BITS_LIST'] for _, name in temp_dict.items()] # 跨/就/微學程
 
-        # 歷年修課.json (i.e. self.historical_courses)
+        # 歷年修課.json (historical_courses)
         self.cur_semester = historical_courses['YEAR_TERM'].strip()
         self.course_list = historical_courses['STD_COURSE_LIST'] # TODO: parse
         self.sys_eng_course_pass = historical_courses['STD_ENGLISH_PASS']
         self.sys_eng_courses = historical_courses['STD_FULL_ENGLISH'] # TODO: parse
 
-        # 選課系統_總覽.json (i.e. self.total_overview)
+        # 選課系統_總覽.json (total_overview)
         self.select_system_open = total_overview['sys_open']
         self.select_status = total_overview['announcement_td']
         self.chosed_courses = total_overview['take_course_get'] # TODO: parse
         self.register_list = total_overview['register_get'] # TODO: parse
         self.track_list = total_overview['track_get'] # TODO: parse
 
-        # 歷年修課與狀態表.html (i.e. self.course_properties)
+        # 歷年修課與狀態表.html (course_properties)
+        course_properties = BeautifulSoup(course_properties, 'html.parser')
         ## add passed courses
         course_set = set()
         contents = course_properties.find('div', id = 'wrapper').find('div', id = 'content').find('div', id = 'right_content')

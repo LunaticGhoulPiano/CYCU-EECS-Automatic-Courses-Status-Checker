@@ -35,20 +35,22 @@ def generate_future_course_table(info):
 
 # read json files, and generate excel file of course status
 def generate_info(enroll_year):
-    historical_courses = load_file('./CYCU-Myself', '歷年修課.json')
     basic_user_info = load_file('./CYCU-Myself', '選課系統_基本資料.json')
+    historical_courses = load_file('./CYCU-Myself', '歷年修課.json')
     total_overview = load_file('./CYCU-Myself', '選課系統_總覽.json')
     course_properties = load_file('./CYCU-Myself', '歷年修課與狀態表.html')
     basic_rules = load_file('./Generated', f'{enroll_year}_基本畢業條件.json')
     credit_details = load_file('./Generated', '各學程之必修_核心_選修總表.json')
-    if all([historical_courses, basic_user_info, total_overview, course_properties, basic_rules, credit_details]):
+    if all([basic_user_info, historical_courses, total_overview, course_properties, basic_rules, credit_details]):
+        # initialize
         info = StudentInfo(enroll_year, basic_rules, credit_details)
-        info.read(historical_courses, basic_user_info, total_overview, course_properties)
+        info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
+        # generate
         generate_status_table(info)
         generate_future_course_table(info)
     else:
         print('error')
         return
 
-#generate_info('110')
+# generate_info('110')
