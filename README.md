@@ -86,3 +86,6 @@
             ```
             python3 main.py
             ```
+
+## 備註
+- ```> 正在取得MyMentor資料...```會跑比較久，因為要透過PlayWright模擬與瀏覽器的交互行為
