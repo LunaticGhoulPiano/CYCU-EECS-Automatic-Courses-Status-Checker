@@ -8,11 +8,10 @@
 - 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表至```Program```資料夾
 - 根據入學年度（以是否有在[官網提供的應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)中為準）自動產生畢業條件到```./Generated/{入學年度}_基本畢業條件.json```
 - 根據以上資料自動產生電資學院四大系十一大學程之詳細資料到```./Generated/各學程之必修_核心_選修總表.json```
+- 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/index.do)自動爬取```檢視自我學習狀況-歷年修課清單一覽表```到```./Generated/歷年修課與狀態表.html```
 
 ### TODO:
 - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-- 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/stdLogin.do)爬到課程對應的性質
-- ~~在```get_student_data.py```新增爬取網頁並保存為html檔到```./CYCU-Myself```以供後續設定json檔未提供的"課程性質"（如輔雙跨就微等）~~
 - 完成```generate_info.py```與```student_info.py```：
     - ```student_info.py```負責read、parse、format所有資料並寫入此class
     - ```generate_info.py```根據```student_info.py```產生修課狀態表（及預排課表）
@@ -38,7 +37,8 @@
 │ ├──歷年修課.json
 │ ├──選課系統_追蹤清單.json
 │ ├──選課系統_基本資料.json
-│ └──選課系統_總覽.json
+│ ├──選課系統_總覽.json
+│ └──歷年修課與狀態表.html
 ├──Generated（自動產生）
 │ ├──{入學年度}_基本畢業條件.json
 │ └──各學程之必修_核心_選修總表.json
@@ -57,14 +57,18 @@
 ### 執行
 - Python：
     1. git clone到你的電腦：
-    ```
-    git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
-    ```
+        ```
+        git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
+        ```
     2. 安裝所需libraries：
-    ```
-    pip install -r requirements.txt
-    ```
-    3. 執行：
-    ```
-    python main.py
-    ```
+        ```
+        pip install -r requirements.txt
+        ```
+    3. 安裝```playwright```所需瀏覽器（本次使用Chromium）：
+        ```
+        python -m playwright install chromium
+        ```
+    4. 執行：
+        ```
+        python main.py
+        ```

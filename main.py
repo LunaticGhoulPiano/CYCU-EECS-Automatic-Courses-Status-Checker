@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 from dotenv import load_dotenv, set_key
-from get_student_data import login, get_student_data
+from get_student_data import login, get_student_data, get_course_properties
 from get_files import get_files
 from generate_basic_course_table import generate_basic_course_table
 from generate_info import generate_info
@@ -9,8 +9,9 @@ from generate_info import generate_info
 ENV_PATH = '.env'
 
 class Student:
-    def __init__(self, usr_id):
+    def __init__(self, usr_id, usr_pwd):
         self.id = usr_id
+        self.pwd = usr_pwd
         self.enroll_year = None
         self.dept_number = None
         self.class_num = None
@@ -37,7 +38,7 @@ def init(failed = False):
         usr_pwd = input('密碼：')
         set_key(ENV_PATH, 'USR_PWD', usr_pwd)
     
-    # login
+    # login CYCU-Mysef
     login_token, cookies = login(usr_id, usr_pwd)
     if not login_token:
         if input('是否重新登入(Y/N)? ') == 'Y':
@@ -46,7 +47,7 @@ def init(failed = False):
             return None, None, None
     
     # parse id
-    usr = Student(usr_id)
+    usr = Student(usr_id, usr_pwd)
     usr.parse_id()
     return usr, login_token, cookies
 
@@ -58,6 +59,8 @@ def main():
         return
     print('> 正在取得CYCU-Myself檔案...')
     get_student_data(login_token, cookies)
+    print('> 正在取得MyMentor資料...')
+    get_course_properties(usr.id, usr.pwd)
     print('> 正在取得應修科目表及學程表...')
     get_files(usr.enroll_year)
     print('> 正在產生畢業應修科目表...')

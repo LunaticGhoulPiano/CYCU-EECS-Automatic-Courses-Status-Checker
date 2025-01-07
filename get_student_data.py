@@ -2,9 +2,11 @@
 import os
 import json
 import requests
+from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 
 MYSELF_URL = 'https://myself.cycu.edu.tw'
-MYMENTOR_URL = 'https://cmap.cycu.edu.tw:8443/MyMentor' # TODO: '/index.do' -> '/stdLogin.do' -> '/courseHistory.do' and save as html
+MYMENTOR_URL = 'https://cmap.cycu.edu.tw:8443/MyMentor'
 HEADERS = {'Content-Type': 'application/json',
            'User-Agent': 'CourseSelector/1.0',
            'Accept': '*/*',
@@ -57,11 +59,34 @@ def get_file(login_token, cookies, authApi, tgt_url, method, file_name):
         else:
             print(f'> \"{file_name}\"獲取失敗！')
 
+# get from CYCU-Myself
 def get_student_data(login_token, cookies):
-    # get files
     dir_name = './CYCU-Myself'
     os.makedirs(dir_name, exist_ok = True)
     get_file(login_token, cookies, '/credit/json/ss_loginUser.jsp', '/myself_api_127/credit/api/api_credit.jsp', 'query', f'{dir_name}/歷年修課')
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_base_info', f'{dir_name}/選課系統_基本資料')
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'track_get', f'{dir_name}/選課系統_追蹤清單')
     get_file(login_token, cookies, '/elective/json/ss_loginUser_student.jsp', '/myself_api_127/elective/mvc/elective_system.jsp', 'st_info_get', f'{dir_name}/選課系統_總覽')
+
+# get from MyMentor
+def get_course_properties(usr_id, usr_pwd):
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True) 
+        page = browser.new_page() 
+        page.goto(f'{MYMENTOR_URL}/index.do')
+        page.fill('input#userId', usr_id)
+        page.fill('input#password', usr_pwd)
+        page.evaluate("document.getElementById('stdLogin').submit()") # trigger onclick
+        page.wait_for_load_state("networkidle")
+        if 'stdLogin.do' in page.url:
+            page.goto(f'{MYMENTOR_URL}/courseHistory.do')
+            page.wait_for_load_state("networkidle")
+            if 'courseHistory.do' in page.url:
+                soup = BeautifulSoup(page.content(), 'html.parser')
+                with open('./CYCU-Myself/歷年修課與狀態表.html', 'wb') as f:
+                    f.write(soup.prettify('utf-8'))
+            else:
+                print(f'> 無法取得MyMentor歷年修課！')
+        else:
+            print(f'> 無法跳轉到MyMentor歷年修課！')
+        browser.close()
