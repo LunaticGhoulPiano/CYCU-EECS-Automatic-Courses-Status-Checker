@@ -35,7 +35,6 @@
 ├──student_info.py
 ├──CYCU-Myself（自動產生）
 │ ├──歷年修課.json
-│ ├──選課系統_追蹤清單.json
 │ ├──選課系統_基本資料.json
 │ ├──選課系統_總覽.json
 │ └──歷年修課與狀態表.html
