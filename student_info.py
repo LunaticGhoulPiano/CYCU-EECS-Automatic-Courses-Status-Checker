@@ -15,7 +15,6 @@ class StudentInfo:
         self.sys_eng_course_pass = False # 學校系統內部判斷是否通過英文學程
         self.sys_eng_courses = [] # 學校系統內部認列的全英文課程
         self.select_system_open = False # 選課系統是否開放
-        self.select_status = '' # 現在選課階段
         self.historical_course_list = [] # 歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
         self.chose_list = [] # 已選上的課程清單
@@ -42,7 +41,6 @@ class StudentInfo:
 
         # 選課系統_總覽.json (total_overview)
         self.select_system_open = total_overview['sys_open']
-        self.select_status = total_overview['announcement_td']
         self.chose_list = total_overview['take_course_get'] # TODO: parse
         self.register_list = total_overview['register_get'] # TODO: parse
         self.track_list = total_overview['track_get'] # TODO: parse

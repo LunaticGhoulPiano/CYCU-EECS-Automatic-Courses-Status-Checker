@@ -17,17 +17,25 @@ def load_file(file_path, file_name):
 
 def generate(info):
     # TODO: call function in info to generate status table
-    ## build df, judge and set status
-    df = pd.DataFrame()
+    ## worksheet 0: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 修課狀態表
+    ## 7 columns for each row
+    status_table = pd.DataFrame(columns = ['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7'])
+    major1 = info.basic_rules['學系選修']['主修學程一']
+    major2 = info.basic_rules['學系選修']['主修學程二']
+    sub_major = info.basic_rules['學系選修']['副修學程']
+    overview_header = [f'主修一：{major1}，主修二：{major2}, 副修：{sub_major}',
+                       '畢業門檻學分數',
+                       '已修學分數',
+                       '整學期缺項',
+                       '缺項備註',
+                       '正在修習',
+                       '預計修習']
     
-    ## create xlsx file
-    ### worksheet 0: {enroll_year}_ 基本畢業條件.json
-    ### worksheet 1: 各學程之必修_核心_選修總表.json
-    ### worksheet 2: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 修課狀態表
-    ### worksheet 3: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 預排課表
-
-    ## write xlsx file
+    
     # TODO : call function in info to generate future course table (if needed)
+    ## worksheet 1: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 預排課表
+
+    # if already has excel file, then append in new worksheets
 
 # read json files, and generate excel file of course status
 def generate_info(enroll_year):
