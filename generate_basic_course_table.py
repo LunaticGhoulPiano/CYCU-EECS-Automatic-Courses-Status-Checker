@@ -44,12 +44,12 @@ def generate_table(path, enroll_year):
                     '學分數': 1,
                     '修習時間': f'{enroll_year}2 / 大一下'
                 },
-                '實用英文(一)': {
+                '實用英文（一）': { # 全形
                     '期程': '半',
                     '學分數': 1,
                     '修習時間': f'{int(enroll_year)+1}1 / 大二上' # not sure
                 },
-                '實用英文(二)': {
+                '實用英文（二）': { # 全形
                     '期程': '半',
                     '學分數': 1,
                     '修習時間': f'{int(enroll_year)+1}2 / 大二下' # not sure
@@ -269,7 +269,7 @@ def generate_table(path, enroll_year):
                     '擋修科目': None,
                     '續修條件': None
                 },
-                '電路實驗(一):': {
+                '電路實驗(一)': {
                     '期程': '半',
                     '學分數': 1,
                     '修習時間': f'{int(enroll_year)+1}1 / 大二上', # not sure

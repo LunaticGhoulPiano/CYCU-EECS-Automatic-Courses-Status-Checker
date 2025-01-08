@@ -59,7 +59,7 @@ def main():
         return
     print('> 正在取得CYCU-Myself檔案...')
     get_student_data(login_token, cookies)
-    print('> 正在取得MyMentor資料...')
+    print('> 正在取得MyMentor資料...（較久，請稍等）')
     get_course_properties(usr.id, usr.pwd)
     print('> 正在取得應修科目表及學程表...')
     get_files(usr.enroll_year)

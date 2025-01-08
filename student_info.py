@@ -9,6 +9,23 @@ class StudentInfo:
         self.class_name = '' # 班級名稱
         self.id = '' # 學號
         self.enroll_year = enroll_year # 入學年度(學號前三碼)
+        self.majors = { # 學程
+            '主修學程一': {
+                '學程名稱': basic_rules['學系選修']['主修學程一'], # ex. '資訊軟體學程'
+                '所屬學系': basic_rules['學系選修']['主修學程一所屬學系'], # ex. '資訊工程學系'
+                '對應xlsx名': basic_rules['學系選修']['學程細項'][basic_rules['學系選修']['主修學程一']]['對應xlsx名'] # ex. '資工'
+            },
+            '主修學程二': {
+                '學程名稱': basic_rules['學系選修']['主修學程二'],
+                '所屬學系': basic_rules['學系選修']['主修學程二所屬學系'],
+                '對應xlsx名': basic_rules['學系選修']['學程細項'][basic_rules['學系選修']['主修學程二']]['對應xlsx名']
+            },
+            '副修學程': {
+                '學程名稱': basic_rules['學系選修']['副修學程'],
+                '所屬學系': basic_rules['學系選修']['副修學程所屬學系'],
+                '對應xlsx名': basic_rules['學系選修']['學程細項'][basic_rules['學系選修']['副修學程']]['對應xlsx名']
+            }
+        }
         self.cur_semester = '' # 目前學期
         self.survey_finish_rate = '' # 教學評量問卷填答率
         self.cross_bits = [] # 跨/就/微學程
@@ -23,7 +40,7 @@ class StudentInfo:
         self.basic_rules = basic_rules # 基本畢業條件
         self.credit_details = credit_details # 各學程之必修/核心/選修
     
-    def extract_properties(self, course):
+    def __extract_properties(self, course): # private method
         course_properties = []
         course_name = ''
         index = 0
@@ -80,7 +97,7 @@ class StudentInfo:
                 course_set.add(data['1'])
         ## extract properties
         for course in course_set:
-            course_name, course_properties = self.extract_properties(course)
+            course_name, course_properties = self.__extract_properties(course)
             self.course_properties_mapping[course_name] = course_properties
     
     def parse(self):
@@ -90,7 +107,7 @@ class StudentInfo:
         else:
             temp_dict = {}
             for course_dict in self.historical_course_list:
-                # check course properties again
+                # extract course properties again
                 """
                 MyMentor的資料(self.historical_course_list)不會記錄Myself認列的全英文課程
                 因此要再check過一遍，如'(就)(P)(英)人生哲學'
@@ -98,25 +115,69 @@ class StudentInfo:
                 Myself紀錄的歷屆修課之課名key: 'CURS_NM_C_S_A'會是'(英)人生哲學'
                 因此還要重新parse過並將新的屬性加入，如果parse完發現mapping沒紀錄過(理論上這是不會發生的)就直接加入
                 """
-                course_name, course_properties = self.extract_properties(course_dict['CURS_NM_C_S_A'].strip())
-                if course_name in self.course_properties_mapping and course_properties:
-                    for course_property in course_properties:
-                        if course_property not in self.course_properties_mapping[course_name]:
-                            self.course_properties_mapping[course_name].append(course_property)
-                # checck type (基本知能/通識基礎必修...)
-                """
-                權重: 基本知能
-                """
-                
-                # add
+                course_name, course_properties = self.__extract_properties(course_dict['CURS_NM_C_S_A'].strip())
+                if course_name in self.course_properties_mapping:
+                    if course_properties: # to prevent empty properties cover the old properties
+                        for course_property in course_properties:
+                            if course_property not in self.course_properties_mapping[course_name]:
+                                self.course_properties_mapping[course_name].append(course_property)
+                else: # to prevent new course that not in mapping
+                    self.course_properties_mapping[course_name] = course_properties
+                # add infos
                 temp_dict[course_name] = {
                     '課程代碼': course_dict['OP_CODE_A'].strip(),
                     '學分數': str(course_dict['OP_CREDIT_A']),
                     '性質': self.course_properties_mapping[course_name],
                     '期程': course_dict['OP_QUALITY_A'].strip(),
                     '修習時間': course_dict['PASS_YEARTERM'].strip(),
-                    '分數': course_dict['SCORE_FNAL'].strip()
+                    '分數': course_dict['SCORE_FNAL'].strip(),
+                    '類別': ''
                 }
+                # judge type by the above infos (基本知能/通識基礎必修...)
+                ## 注意'實用英文'的括號為全型，學校課名命名規則就是沒有規則
+                if any(course_name in name for name in self.basic_rules['基本知能']) or \
+                    any(name in course_name for name in self.basic_rules['基本知能']) or \
+                        'GR' in temp_dict[course_name]['課程代碼'] or \
+                            course_name in ['體育一', '體育二', '體育三', '體育四', '體育五', '體育六']: # 'GR': 體育興趣, 舊制體育
+                    temp_dict[course_name]['類別'] = '基本知能'
+                ## '自然科學與人工智慧'屬於'自然科學與人工智慧導論'，但'人工智慧導論'是小大一暑期先修課程為自由學分
+                elif course_name in [name for four_type in self.basic_rules['通識基礎必修'] for type_name in four_type \
+                    for name in self.basic_rules['通識基礎必修'][type_name]] or \
+                        course_name == '自然科學與人工智慧':
+                    temp_dict[course_name]['類別'] = '通識基礎必修'
+                ## 需要雙向比對, ex. course_name = '機率與統計' -in-> name = '機率與統計(一)'; ex. course_name = '電子學(一)' <-in- name = '電子學'
+                elif any(course_name in name for name in self.basic_rules['學系必修']) or \
+                    any(name in course_name for name in self.basic_rules['學系必修']):
+                    temp_dict[course_name]['類別'] = '學系必修'
+                    # TODO: 解決工程數學(一)是[電子/電機/通訊]學系必修，同時也是學系選修-必修的問題
+                else:
+                    # TODO
+                    exit()
+                    ## 學系選修
+                    types = ['必修', '核心', '選修']
+                    order = ['主修學程一', '主修學程二', '副修學程']
+                    for major in order:
+                        major_info = self.majors[major]
+                        for cur_type in types:
+                            courses = self.credit_details[major_info['對應xlsx名']][major_info['學程名稱']][cur_type]
+                            if not (major_info['對應xlsx名'] == '資工' and cur_type == '選修'):
+                                courses_dict = courses['課程']
+                                if course_name in courses_dict:
+                                    temp_dict[course_name]['類別'] = '學系選修'
+                                    break
+                            else:
+                                # search 資工選修四大類
+                                print(course_name)
+                                four_type_dict = courses
+                                exit()
+                                pass
+                        
+                        if temp_dict[course_name]['類別'] != '':
+                            break
+                    print(temp_dict[course_name]['類別'])
+                    ## 通識延伸選修
+                    ## 自由選修
+                    ## 其他選修
             self.historical_course_list = temp_dict
         
         # self.sys_eng_courses
@@ -144,7 +205,7 @@ class StudentInfo:
                     '學分數': course_dict['OP_CREDIT'].strip(),
                     '期程': course_dict['OP_QUALITY'].strip(),
                     '上課時間': course_dict['OP_TIME_123'].strip(),
-                    '上課地點': course_dict['OP_RM_NAME_123'].strip(),
+                    '上課地點': course_dict['OP_RM_NAME_123'].strip() if 'OP_RM_NAME_123' in course_dict else '',
                     '教授': course_dict['TEACHER'].strip(),
                     '必選修': course_dict['OP_STDY'].strip(),
                     '開課學系': course_dict['DEPT_NAME'].strip()
@@ -167,7 +228,7 @@ class StudentInfo:
                     '課程代碼': track_dict['OP_CODE'].strip(),
                     '學分數': track_dict['OP_CREDIT'].strip(),
                     '上課時間': track_dict['OP_TIME_123'].strip(),
-                    '上課地點': track_dict['OP_RM_NAME_1'].strip(),
+                    '上課地點': track_dict['OP_RM_NAME_1'].strip() if 'OP_RM_NAME_1' in track_dict else '',
                     '教授': track_dict['TEACHER'].strip(),
                     '必選修': track_dict['OP_STDY'].strip(),
                     '開課學系': track_dict['DEPT_NAME'].strip()

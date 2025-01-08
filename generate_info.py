@@ -20,22 +20,8 @@ def generate(info):
     ## worksheet 0: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 修課狀態表
     ## 7 columns for each row
     status_table = pd.DataFrame(columns = ['Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6', 'Column7'])
-    major1 = info.basic_rules['學系選修']['主修學程一']
-    major2 = info.basic_rules['學系選修']['主修學程二']
-    sub_major = info.basic_rules['學系選修']['副修學程']
-    overview_header = [f'主修一：{major1}，主修二：{major2}, 副修：{sub_major}',
-                       '畢業門檻學分數',
-                       '已修學分數',
-                       '整學年（上+下）缺項',
-                       '缺項備註',
-                       '當學期正在修習',
-                       '下學期預計修習']
-    overview_content = []
-    
-    
     # TODO: call function in info to generate future course table (if needed)
     ## worksheet 1: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 預排課表
-
     # if already has excel file, then append in new worksheets
 
 # read json files, and generate excel file of course status
@@ -53,11 +39,6 @@ def generate_info(enroll_year):
         info.parse()
         # generate
         #generate(info)
-        info.PrintCourses()
-        """i = 1
-        for course_name, course_dict in info.historical_course_list.items():
-            print(course_name, course_dict['性質'])
-            i += 1"""
     else:
         print('error')
         return
