@@ -21,13 +21,12 @@ class StudentInfo:
         self.select_status = '' # 現在選課階段
         self.course_list = [] # 歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
-        self.chosed_courses = [] # 已選上的課程清單
+        self.chose_list = [] # 已選上的課程清單
         self.register_list = [] # 登記清單
         self.track_list = [] # 追蹤清單
         self.basic_rules = basic_rules # 基本畢業條件
         self.credit_details = credit_details # 各學程之必修/核心/選修
     
-    # read files
     def read(self, basic_user_info, historical_courses, total_overview, course_properties):
         # 選課系統_基本資料.json (basic_user_info)
         basic_info = basic_user_info['st_info'][0]
@@ -47,7 +46,7 @@ class StudentInfo:
         # 選課系統_總覽.json (total_overview)
         self.select_system_open = total_overview['sys_open']
         self.select_status = total_overview['announcement_td']
-        self.chosed_courses = total_overview['take_course_get'] # TODO: parse
+        self.chose_list = total_overview['take_course_get'] # TODO: parse
         self.register_list = total_overview['register_get'] # TODO: parse
         self.track_list = total_overview['track_get'] # TODO: parse
 
@@ -84,12 +83,74 @@ class StudentInfo:
                     course_name = course[index:].strip()
                     break
             self.course_properties_mapping[course_name] = course_properties
-
-    # TODO: ---------- parse ----------
-    ## self.course_list
-    ## self.sys_eng_courses
-    ## self.chosed_courses
-    ## self.register_list
-    ## self.track_list
+    
     def parse(self):
-        pass
+        # self.course_list
+        if self.course_list == []:
+            self.course_list = {}
+        else:
+            temp_dict = {}
+            for course_dict in self.course_list:
+                temp_dict[course_dict['CURS_NM_C_S_A'].strip()] = {
+                    '課程代碼': course_dict['OP_CODE_A'].strip(),
+                    '學分數': str(course_dict['OP_CREDIT_A']),
+                    '期程': course_dict['OP_QUALITY_A'].strip(),
+                    '修習時間': course_dict['PASS_YEARTERM'].strip(),
+                    '分數': course_dict['SCORE_FNAL'].strip()
+                }
+            self.course_list = temp_dict
+        
+        # self.sys_eng_courses
+        if self.sys_eng_courses == []:
+            self.sys_eng_course_pass = {}
+        else:
+            temp_dict = {}
+            for course_dict in self.sys_eng_courses:
+                temp_dict[course_dict['CURS_NM_C_S'].strip()] = {
+                    '課程代碼': course_dict['OP_CODE'].strip(),
+                    '學分數': course_dict['OP_CREDIT'].strip(),
+                    '修習時間': course_dict['YEAR_TERM'].strip(),
+                    '分數': course_dict['SCORE_FNAL'].strip()
+                }
+            self.sys_eng_courses = temp_dict
+
+        # self.chose_list
+        if self.chose_list == []:
+            self.chose_list = {}
+        else:
+            temp_dict = {}
+            for course_dict in self.chose_list:
+                temp_dict[course_dict['CNAME'].strip()] = {
+                    '課程代碼': course_dict['OP_CODE'].strip(),
+                    '學分數': course_dict['OP_CREDIT'].strip(),
+                    '期程': course_dict['OP_QUALITY'].strip(),
+                    '上課時間': course_dict['OP_TIME_123'].strip(),
+                    '上課地點': course_dict['OP_RM_NAME_123'].strip(),
+                    '教授': course_dict['TEACHER'].strip(),
+                    '必選修': course_dict['OP_STDY'].strip(),
+                    '開課學系': course_dict['DEPT_NAME'].strip()
+                }
+            self.chose_list = temp_dict
+        
+        # self.register_list
+        if self.register_list == []:
+            self.register_list = {}
+        else:
+            pass
+        
+        # self.track_list
+        if self.track_list == []:
+            self.track_list = {}
+        else:
+            temp_dict = {}
+            for track_dict in self.track_list:
+                temp_dict[track_dict['CNAME'].strip()] = {
+                    '課程代碼': track_dict['OP_CODE'].strip(),
+                    '學分數': track_dict['OP_CREDIT'].strip(),
+                    '上課時間': track_dict['OP_TIME_123'].strip(),
+                    '上課地點': track_dict['OP_RM_NAME_1'].strip(),
+                    '教授': track_dict['TEACHER'].strip(),
+                    '必選修': track_dict['OP_STDY'].strip(),
+                    '開課學系': track_dict['DEPT_NAME'].strip()
+                }
+            self.track_list = temp_dict

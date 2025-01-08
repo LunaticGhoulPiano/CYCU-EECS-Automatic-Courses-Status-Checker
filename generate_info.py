@@ -53,4 +53,4 @@ def generate_info(enroll_year):
         print('error')
         return
 
-# generate_info('110')
+#generate_info('110')
