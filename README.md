@@ -12,9 +12,7 @@
 
 ### TODO:
 - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
-- 完成```generate_info.py```與```student_info.py```：
-    - ```student_info.py```負責read、parse、format所有資料並寫入此class
-    - ```generate_info.py```根據```student_info.py```產生修課狀態表（及預排課表）
+- 完成```generate_info.py```，根據```student_info.py```產生修課狀態表（及預排課表）
 - 抓線上表單選課作業（optional）
 - 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
 - 找同學/學弟妹測試系統
