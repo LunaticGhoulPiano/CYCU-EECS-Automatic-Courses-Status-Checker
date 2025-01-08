@@ -106,6 +106,7 @@ class StudentInfo:
             self.historical_course_list = {}
         else:
             temp_dict = {}
+            i = 0
             for course_dict in self.historical_course_list:
                 # extract course properties again
                 """
@@ -125,13 +126,15 @@ class StudentInfo:
                     self.course_properties_mapping[course_name] = course_properties
                 # add infos
                 temp_dict[course_name] = {
-                    '課程代碼': course_dict['OP_CODE_A'].strip(),
-                    '學分數': str(course_dict['OP_CREDIT_A']),
-                    '性質': self.course_properties_mapping[course_name],
-                    '期程': course_dict['OP_QUALITY_A'].strip(),
-                    '修習時間': course_dict['PASS_YEARTERM'].strip(),
-                    '分數': course_dict['SCORE_FNAL'].strip(),
-                    '類別': ''
+                    '課程代碼': course_dict['OP_CODE_A'].strip(), # ex. 'CS111E'
+                    '學分數': str(course_dict['OP_CREDIT_A']), # ex. '3'
+                    '課程性質': self.course_properties_mapping[course_name], # ex. ['程', '跨']
+                    '期程': course_dict['OP_QUALITY_A'].strip(), # ex. '半'
+                    '修習時間': course_dict['PASS_YEARTERM'].strip(), # ex. '1121'
+                    '分數': course_dict['SCORE_FNAL'].strip(), # ex. '83'
+                    '學分性質': '', # ex. '學系選修'
+                    '課程所屬學程性質': '', # ex. '核心'
+                    '四大類類別': [] # ex. []
                 }
                 # judge type by the above infos (基本知能/通識基礎必修...)
                 ## 注意'實用英文'的括號為全型，學校課名命名規則就是沒有規則
@@ -139,45 +142,58 @@ class StudentInfo:
                     any(name in course_name for name in self.basic_rules['基本知能']) or \
                         'GR' in temp_dict[course_name]['課程代碼'] or \
                             course_name in ['體育一', '體育二', '體育三', '體育四', '體育五', '體育六']: # 'GR': 體育興趣, 舊制體育
-                    temp_dict[course_name]['類別'] = '基本知能'
+                    temp_dict[course_name]['學分性質'] = '基本知能'
                 ## '自然科學與人工智慧'屬於'自然科學與人工智慧導論'，但'人工智慧導論'是小大一暑期先修課程為自由學分
                 elif course_name in [name for four_type in self.basic_rules['通識基礎必修'] for type_name in four_type \
                     for name in self.basic_rules['通識基礎必修'][type_name]] or \
                         course_name == '自然科學與人工智慧':
-                    temp_dict[course_name]['類別'] = '通識基礎必修'
+                    temp_dict[course_name]['學分性質'] = '通識基礎必修'
                 ## 需要雙向比對, ex. course_name = '機率與統計' -in-> name = '機率與統計(一)'; ex. course_name = '電子學(一)' <-in- name = '電子學'
                 elif any(course_name in name for name in self.basic_rules['學系必修']) or \
                     any(name in course_name for name in self.basic_rules['學系必修']):
-                    temp_dict[course_name]['類別'] = '學系必修'
+                    temp_dict[course_name]['學分性質'] = '學系必修'
                     # TODO: 解決工程數學(一)是[電子/電機/通訊]學系必修，同時也是學系選修-必修的問題
                 else:
-                    # TODO
-                    exit()
+                    # TODO: set 學系選修-必修/核心/選修
                     ## 學系選修
                     types = ['必修', '核心', '選修']
                     order = ['主修學程一', '主修學程二', '副修學程']
+                    four_type_query_records = { # 避免重複查詢四大類額外耗時間
+                        '網路與資訊安全': False,
+                        '系統與IC設計自動化': False,
+                        '資訊系統(含資料庫)': False,
+                        '資訊科技應用': False
+                    }
                     for major in order:
                         major_info = self.majors[major]
                         for cur_type in types:
                             courses = self.credit_details[major_info['對應xlsx名']][major_info['學程名稱']][cur_type]
                             if not (major_info['對應xlsx名'] == '資工' and cur_type == '選修'):
-                                courses_dict = courses['課程']
-                                if course_name in courses_dict:
-                                    temp_dict[course_name]['類別'] = '學系選修'
+                                if course_name in courses['課程']:
+                                    temp_dict[course_name]['學分性質'] = '學系選修'
+                                    temp_dict[course_name]['課程所屬學程性質'] = cur_type
                                     break
                             else:
                                 # search 資工選修四大類
-                                print(course_name)
-                                four_type_dict = courses
-                                exit()
-                                pass
-                        
-                        if temp_dict[course_name]['類別'] != '':
+                                for four_type in four_type_query_records:
+                                    if not four_type_query_records[four_type]:
+                                        four_type_query_records[four_type] = True
+                                        course_dict = self.credit_details[major_info['對應xlsx名']]['四大類'][four_type]['課程']
+                                        # 如果課名有在四大類但不是資工(CS)或校際TAICA聯盟(ST)開課就會篩掉
+                                        if course_name in course_dict and \
+                                            ('CS' in temp_dict[course_name]['課程代碼'] or \
+                                                'ST' in temp_dict[course_name]['課程代碼']):
+                                            temp_dict[course_name]['學分性質'] = '學系選修'
+                                            temp_dict[course_name]['課程所屬學程性質'] = cur_type
+                                            temp_dict[course_name]['四大類類別'].append(four_type)
+                                            # 不加break是因為可能屬於多個四大類
+                        if temp_dict[course_name]['學分性質'] != '':
                             break
-                    print(temp_dict[course_name]['類別'])
-                    ## 通識延伸選修
-                    ## 自由選修
-                    ## 其他選修
+                    if temp_dict[course_name]['學分性質'] == '':
+                        pass
+                        ## 通識延伸選修
+                        ## 自由選修
+                        ## 其他選修
             self.historical_course_list = temp_dict
         
         # self.sys_eng_courses
