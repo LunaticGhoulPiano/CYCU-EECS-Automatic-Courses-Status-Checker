@@ -19,7 +19,7 @@ class StudentInfo:
         self.sys_eng_courses = [] # 學校系統內部認列的全英文課程
         self.select_system_open = False # 選課系統是否開放
         self.select_status = '' # 現在選課階段
-        self.course_list = [] # 歷年修課清單
+        self.historical_course_list = [] # 歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
         self.chose_list = [] # 已選上的課程清單
         self.register_list = [] # 登記清單
@@ -39,7 +39,7 @@ class StudentInfo:
 
         # 歷年修課.json (historical_courses)
         self.cur_semester = historical_courses['YEAR_TERM'].strip()
-        self.course_list = historical_courses['STD_COURSE_LIST'] # TODO: parse
+        self.historical_course_list = historical_courses['STD_COURSE_LIST'] # TODO: parse
         self.sys_eng_course_pass = historical_courses['STD_ENGLISH_PASS']
         self.sys_eng_courses = historical_courses['STD_FULL_ENGLISH'] # TODO: parse
 
@@ -85,12 +85,12 @@ class StudentInfo:
             self.course_properties_mapping[course_name] = course_properties
     
     def parse(self):
-        # self.course_list
-        if self.course_list == []:
-            self.course_list = {}
+        # self.historical_course_list
+        if self.historical_course_list == []:
+            self.historical_course_list = {}
         else:
             temp_dict = {}
-            for course_dict in self.course_list:
+            for course_dict in self.historical_course_list:
                 temp_dict[course_dict['CURS_NM_C_S_A'].strip()] = {
                     '課程代碼': course_dict['OP_CODE_A'].strip(),
                     '學分數': str(course_dict['OP_CREDIT_A']),
@@ -98,7 +98,7 @@ class StudentInfo:
                     '修習時間': course_dict['PASS_YEARTERM'].strip(),
                     '分數': course_dict['SCORE_FNAL'].strip()
                 }
-            self.course_list = temp_dict
+            self.historical_course_list = temp_dict
         
         # self.sys_eng_courses
         if self.sys_eng_courses == []:
