@@ -26,13 +26,14 @@ def generate(info):
     overview_header = [f'主修一：{major1}，主修二：{major2}, 副修：{sub_major}',
                        '畢業門檻學分數',
                        '已修學分數',
-                       '整學期缺項',
+                       '整學年（上+下）缺項',
                        '缺項備註',
-                       '正在修習',
-                       '預計修習']
+                       '當學期正在修習',
+                       '下學期預計修習']
+    overview_content = []
     
     
-    # TODO : call function in info to generate future course table (if needed)
+    # TODO: call function in info to generate future course table (if needed)
     ## worksheet 1: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 預排課表
 
     # if already has excel file, then append in new worksheets
@@ -51,7 +52,12 @@ def generate_info(enroll_year):
         info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
         # generate
-        generate(info)
+        #generate(info)
+        info.PrintCourses()
+        """i = 1
+        for course_name, course_dict in info.historical_course_list.items():
+            print(course_name, course_dict['性質'])
+            i += 1"""
     else:
         print('error')
         return

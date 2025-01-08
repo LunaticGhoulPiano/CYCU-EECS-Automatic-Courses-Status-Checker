@@ -23,6 +23,25 @@ class StudentInfo:
         self.basic_rules = basic_rules # 基本畢業條件
         self.credit_details = credit_details # 各學程之必修/核心/選修
     
+    def extract_properties(self, course):
+        course_properties = []
+        course_name = ''
+        index = 0
+        length = len(course)
+        while index < length:
+            course_property = ''
+            if course[index] == '(':
+                index += 1
+                while course[index] != ')':
+                    course_property += course[index]
+                    index += 1
+                course_properties.append(course_property)
+                index += 1
+            else:
+                course_name = course[index:].strip()
+                break
+        return course_name, course_properties
+    
     def read(self, basic_user_info, historical_courses, total_overview, course_properties):
         # 選課系統_基本資料.json (basic_user_info)
         basic_info = basic_user_info['st_info'][0]
@@ -61,22 +80,7 @@ class StudentInfo:
                 course_set.add(data['1'])
         ## extract properties
         for course in course_set:
-            course_properties = []
-            course_name = ''
-            index = 0
-            length = len(course)
-            while index < length:
-                course_property = ''
-                if course[index] == '(':
-                    index += 1
-                    while course[index] != ')':
-                        course_property += course[index]
-                        index += 1
-                    course_properties.append(course_property)
-                    index += 1
-                else:
-                    course_name = course[index:].strip()
-                    break
+            course_name, course_properties = self.extract_properties(course)
             self.course_properties_mapping[course_name] = course_properties
     
     def parse(self):
@@ -86,9 +90,29 @@ class StudentInfo:
         else:
             temp_dict = {}
             for course_dict in self.historical_course_list:
-                temp_dict[course_dict['CURS_NM_C_S_A'].strip()] = {
+                # check course properties again
+                """
+                MyMentor的資料(self.historical_course_list)不會記錄Myself認列的全英文課程
+                因此要再check過一遍，如'(就)(P)(英)人生哲學'
+                在self.read()中"## extract properties"只會抓出MyMentor紀錄的'(就)(P)'
+                Myself紀錄的歷屆修課之課名key: 'CURS_NM_C_S_A'會是'(英)人生哲學'
+                因此還要重新parse過並將新的屬性加入，如果parse完發現mapping沒紀錄過(理論上這是不會發生的)就直接加入
+                """
+                course_name, course_properties = self.extract_properties(course_dict['CURS_NM_C_S_A'].strip())
+                if course_name in self.course_properties_mapping and course_properties:
+                    for course_property in course_properties:
+                        if course_property not in self.course_properties_mapping[course_name]:
+                            self.course_properties_mapping[course_name].append(course_property)
+                # checck type (基本知能/通識基礎必修...)
+                """
+                權重: 基本知能
+                """
+                
+                # add
+                temp_dict[course_name] = {
                     '課程代碼': course_dict['OP_CODE_A'].strip(),
                     '學分數': str(course_dict['OP_CREDIT_A']),
+                    '性質': self.course_properties_mapping[course_name],
                     '期程': course_dict['OP_QUALITY_A'].strip(),
                     '修習時間': course_dict['PASS_YEARTERM'].strip(),
                     '分數': course_dict['SCORE_FNAL'].strip()
@@ -149,3 +173,8 @@ class StudentInfo:
                     '開課學系': track_dict['DEPT_NAME'].strip()
                 }
             self.track_list = temp_dict
+    def PrintCourses(self):
+        i = 1
+        for course, course_dict in self.historical_course_list.items():
+            print(f"{i}. {course}, {course_dict['性質']}")
+            i += 1
