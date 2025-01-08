@@ -6,7 +6,7 @@
 - 到[學程課程規範](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e5%ad%b8%e7%a8%8b%e8%aa%b2%e7%a8%8b%e8%a6%8f%e5%8a%83/)下載學程表至```Program```資料夾
 - 根據入學年度（以是否有在[官網提供的應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)中為準）自動產生畢業條件到```./Generated/{入學年度}_基本畢業條件.json```
 - 根據以上資料自動產生電資學院四大系十一大學程之詳細資料到```./Generated/各學程之必修_核心_選修總表.json```
-- 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/index.do)自動爬取```檢視自我學習狀況-歷年修課清單一覽表```到```./Generated/歷年修課與狀態表.html```
+- 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/index.do)自動爬取```檢視自我學習狀況-歷年修課清單一覽表```到```./CYCU-MySelf/歷年修課與狀態表.html```
 
 ## TODOs:
 - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
