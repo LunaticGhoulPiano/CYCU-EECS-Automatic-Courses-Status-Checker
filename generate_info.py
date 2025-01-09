@@ -16,6 +16,7 @@ def load_file(file_path, file_name):
         return None
 
 def generate(info):
+    # TODO: calculate credits and still-need credits
     # TODO: call function in info to generate status table
     ## worksheet 0: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 修課狀態表
     ## 7 columns for each row
@@ -37,9 +38,13 @@ def generate_info(enroll_year):
         info = StudentInfo(enroll_year, basic_rules, credit_details)
         info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
-        info.PrintHistoricalCourses()
+        if input('若自由選修不足，是否要自動判斷可認列之課程並分配至自由選修(Y/N)? ') == 'Y':
+            info.automatically_distribute_free_elective_courses()
+        info.sort_historical_courses()
+        #info.print_sorted_historical_courses()
+        info.write_sorted_historical_courses()
         # generate
-        #generate(info)
+        generate(info)
     else:
         print('error')
         return
