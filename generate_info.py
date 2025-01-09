@@ -37,6 +37,7 @@ def generate_info(enroll_year):
         info = StudentInfo(enroll_year, basic_rules, credit_details)
         info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
+        info.PrintHistoricalCourses()
         # generate
         #generate(info)
     else:
