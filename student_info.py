@@ -138,7 +138,12 @@ class StudentInfo:
                         '主修學程二': '',
                         '副修學程': ''
                     },
-                    '四大類類別': [] # ex. []
+                    '四大類類別': [], # ex. []
+                    '審查備註': { # ex. {'主修學程一': '', '主修學程二': '', '副修學程': ''}
+                        '主修學程一': '',
+                        '主修學程二': '',
+                        '副修學程': ''
+                    }
                 }
                 # judge type by the above infos (基本知能/通識基礎必修...)
                 # 基本知能
@@ -183,6 +188,8 @@ class StudentInfo:
                                 if course_name in courses['課程']:
                                     temp_dict[course_name]['學分性質'] = '學系選修'
                                     temp_dict[course_name]['課程所屬學程性質'][major] = cur_type
+                                    temp_dict[course_name]['審查備註'][major] = \
+                                        self.credit_details[major_info['對應xlsx名']][major_info['學程名稱']][cur_type]['課程'][course_name]['審查備註']
                                     break
                             else:
                                 # 只query此資工學程認列的選修四大類
@@ -195,6 +202,7 @@ class StudentInfo:
                                         temp_dict[course_name]['學分性質'] = '學系選修'
                                         temp_dict[course_name]['課程所屬學程性質'][major] = cur_type
                                         temp_dict[course_name]['四大類類別'].append(four_type)
+                                        temp_dict[course_name]['審查備註'][major] = self.credit_details[major_info['對應xlsx名']]['四大類']['審查備註']
                     if temp_dict[course_name]['學分性質'] == '':
                         pass
                         # 自由選修
@@ -263,4 +271,5 @@ class StudentInfo:
             print(f"{i}. {course}: {course_dict['課程代碼']}, {course_dict['學分數']}學分, 期程：{course_dict['期程']}", end = '')
             print(f", 性質: {course_dict['課程性質']}, 修畢學期：{course_dict['修習時間']}, {course_dict['分數']}分, {course_dict['學分性質']}", end = '')
             print(f", 必/核/選: {course_dict['課程所屬學程性質']}, 四大類類別: {course_dict['四大類類別']}")
+            print(f"\t審查備註: {course_dict['審查備註']}")
             i += 1
