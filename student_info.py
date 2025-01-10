@@ -32,7 +32,30 @@ class StudentInfo:
         self.sys_eng_course_pass = False # 學校系統內部判斷是否通過英文學程
         self.sys_eng_courses = [] # 學校系統內部認列的全英文課程
         self.select_system_open = False # 選課系統是否開放
+        self.pass_credits = '0' # 已修畢總數分
+        self.current_credits = '0' # 正在修總習學分數
         self.order = ['基本知能', '通識基礎必修', '通識延伸選修', '學系必修', '學系選修', '自由選修', '其他選修']
+        self.sub_total_credits = {
+            '基本知能': '0',
+            '通識基礎必修': '0',
+            '通識延伸選修': '0',
+            '學系必修': '0',
+            '學系選修': '0',
+            '自由選修': '0',
+            '其他選修': '0'
+        }
+        self.religion_mapping= { # P_KIND
+            # 通識基礎必修
+            '2': '天',
+            '3': '人',
+            '4': '物',
+            '5': '我',
+            # 通識延伸選修
+            '6': '天',
+            '7': '人',
+            '8': '物',
+            '9': '我'
+        }
         self.historical_course_list = [] # 歷年修課清單
         self.sorted_historical_courses = [] # 按照self.order排序的歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
@@ -132,21 +155,27 @@ class StudentInfo:
                     '學分數': str(course_dict['OP_CREDIT_A']), # ex. '3'
                     '課程性質': self.course_properties_mapping[course_name], # ex. ['程', '跨']
                     '期程': course_dict['OP_QUALITY_A'].strip(), # ex. '半'
-                    '修習時間': course_dict['PASS_YEARTERM'].strip(), # ex. '1121'
+                    '修畢學期': course_dict['PASS_YEARTERM'].strip(), # ex. '1121'
                     '分數': course_dict['SCORE_FNAL'].strip(), # ex. '83'
                     '學分性質': '', # ex. '學系選修'
+                    '修課狀態': '正在修習' if course_dict['PASS_YEARTERM'] == self.cur_semester else '已修習',
                     '課程所屬學程性質': { # ex. {'主修學程一': '', '主修學程二': '', '副修學程': ''}
                         '主修學程一': '',
                         '主修學程二': '',
                         '副修學程': ''
                     },
-                    '四大類類別': [], # ex. []
+                    '天人物我類別': '', # ex. ''
+                    '資工四大類類別': [], # ex. []
                     '審查備註': { # ex. {'主修學程一': '', '主修學程二': '', '副修學程': ''}
                         '主修學程一': '',
                         '主修學程二': '',
                         '副修學程': ''
                     }
                 }
+                if temp_dict[course_name]['修課狀態'] == '正在修習':
+                    self.current_credits = str(int(self.current_credits) + course_dict['OP_CREDIT_A'])
+                else:
+                    self.pass_credits = str(int(self.pass_credits) + course_dict['OP_CREDIT_A'])
                 # judge type by the above infos (基本知能/通識基礎必修...)
                 # 基本知能
                 ## 注意'實用英文'的括號為全型，學校課名命名規則就是沒有規則
@@ -160,10 +189,12 @@ class StudentInfo:
                 elif course_name in [name for four_type in self.basic_rules['通識基礎必修'] for type_name in four_type \
                     for name in self.basic_rules['通識基礎必修'][type_name]] or \
                         course_name == '自然科學與人工智慧':
+                    temp_dict[course_name]['天人物我類別'] = self.religion_mapping[course_dict['P_KIND'].strip()] # 2 ~ 5
                     temp_dict[course_name]['學分性質'] = '通識基礎必修'
                 # 通識延伸選修
                 ## 基本上是'GE'開頭，但'CO'開頭的也有可能，不過我沒加
                 elif 'GE' in temp_dict[course_name]['課程代碼']:
+                    temp_dict[course_name]['天人物我類別'] = self.religion_mapping[course_dict['P_KIND'].strip()] # 6 ~ 9
                     temp_dict[course_name]['學分性質'] = '通識延伸選修'
                 # 學系必修
                 ## 需要雙向比對, ex. course_name = '機率與統計' -in-> name = '機率與統計(一)'; ex. course_name = '電子學(一)' <-in- name = '電子學'
@@ -203,9 +234,14 @@ class StudentInfo:
                                             'ST' in temp_dict[course_name]['課程代碼']):
                                         temp_dict[course_name]['學分性質'] = '學系選修'
                                         temp_dict[course_name]['課程所屬學程性質'][major] = cur_type
-                                        temp_dict[course_name]['四大類類別'].append(four_type)
+                                        temp_dict[course_name]['資工四大類類別'].append(four_type)
                                         temp_dict[course_name]['審查備註'][major] = self.credit_details[major_info['對應xlsx名']]['四大類']['審查備註']
-                    if temp_dict[course_name]['學分性質'] == '':
+                    # 電資學系選修: 'UP'
+                    if temp_dict[course_name]['學分性質'] == '' and \
+                        'UP' in temp_dict[course_name]['課程代碼'] and \
+                            '環境服務學習' not in course_name:
+                        temp_dict[course_name]['學分性質'] = '學系選修'
+                    elif temp_dict[course_name]['學分性質'] == '':
                         # 自由選修
                         ## 輔雙跨就微PBL, 磨課師(CO), 專業自主學習
                         ## TODO: 不確定輔雙要怎麼判斷
@@ -227,7 +263,7 @@ class StudentInfo:
                 temp_dict[course_dict['CURS_NM_C_S'].strip()] = {
                     '課程代碼': course_dict['OP_CODE'].strip(),
                     '學分數': course_dict['OP_CREDIT'].strip(),
-                    '修習時間': course_dict['YEAR_TERM'].strip(),
+                    '修畢學期': course_dict['YEAR_TERM'].strip(),
                     '分數': course_dict['SCORE_FNAL'].strip()
                 }
             self.sys_eng_courses = temp_dict
@@ -278,50 +314,107 @@ class StudentInfo:
         pass
     
     def sort_historical_courses(self):
+        # sort by self.order
         sorted_courses = {credit_type: [] for credit_type in self.order}
         for course, course_dict in self.historical_course_list.items():
             credit_type = course_dict['學分性質']
             sorted_courses[credit_type].append((course, course_dict))
+        # sort by credit type (in the order of self.order)
+        for credit_type in self.order:
+            # calculate sub_total_credits
+            self.sub_total_credits[credit_type] = str(sum([int(course_dict['學分數']) for course, course_dict in sorted_courses[credit_type]]))
+            # sort
+            match(credit_type):
+                case '基本知能':
+                    course_order = ['英文(一)', '英文(二)', '實用英文（一）', '實用英文（二）', '英語聽講(一)', '英語聽講(二)', \
+                        '體育一', '體育二', '體育三', '體育四', '體育五', '體育六']
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (course_order.index(x[0]) if x[0] in course_order else float('inf'), x[1]['修畢學期']))
+                case '通識基礎必修':
+                    course_order = [key for _, course_dict in self.basic_rules['通識基礎必修'].items() for key in course_dict]
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (course_order.index('自然科學與人工智慧導論' if x[0] == '自然科學與人工智慧' else x[0] \
+                            ) if x[0] in course_order or x[0] == '自然科學與人工智慧' else float('inf'), x[1]['修畢學期']))
+                case '通識延伸選修':
+                    course_order = ['天', '人', '物', '我']
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (course_order.index(x[1]['天人物我類別']) if x[1]['天人物我類別'] in course_order else float('inf'), x[1]['修畢學期']))
+                case '學系必修':
+                    course_order = [key for key in self.basic_rules['學系必修']]
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (course_order.index('機率與統計' if x[0] == '機率與統計(一)' else \
+                            '電路實驗(一)' if x[0] == '電路實驗' else '電子實驗(一)' if x[0] == '電子實驗' else x[0]) \
+                                if x[0] in course_order or x[0] == '機率與統計(一)' or x[0] == '電路實驗' or x[0] == '電子實驗' \
+                                    else float('inf'), x[1]['修畢學期']))
+                case '學系選修':
+                    course_order = [('主修學程一', '必修'), ('主修學程二', '必修'), ('主修學程一', '核心'), \
+                        ('主修學程二', '核心'), ('主修學程一', '選修'), ('主修學程二', '選修'), \
+                            ('副修學程', '必修'), ('副修學程', '核心'), ('副修學程', '選修'),
+                                ('主修學程一', ''), ('主修學程二', ''), ('副修學程', '')]
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: ((lambda key, value: (course_order.index((key, value)) \
+                            if (key, value) in course_order and x[1]['課程所屬學程性質'] != {'主修學程一': '', '主修學程二': '', '副修學程': ''} \
+                                else float('inf')))(list(x[1]['課程所屬學程性質'].keys())[0], x[1]['課程所屬學程性質'][list(x[1]['課程所屬學程性質'].keys())[0]]), \
+                                    x[1]['修畢學期']))
+                case '自由選修':
+                    course_order = ['輔', '雙', '跨', '就', '微', 'P']
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (
+                            # 1. '課程性質' != [] and 任一性質 in course_order -> 按min_index排序
+                            min(course_order.index(n) for n in x[1]['課程性質'] if n in course_order) if x[1]['課程性質'] else float('inf'),
+                            # 2. '專業自主學習' 排在以上順序的後面
+                            0 if x[0] == '專業自主學習' else 1,
+                            # 3. 課程性質 == [] -> 排在後面
+                            len(x[1]['課程性質']),
+                            # 4. '修畢學期'
+                            x[1]['修畢學期']))
+                case _:
+                    course_order = ['國防軍訓-國防科技', '國防軍訓-國防政策', '國防軍訓-國際情勢', '國防軍訓-防衛動員', '國防軍訓-全民國防', \
+                        '環境服務學習（一）', '環境服務學習（二）']
+                    sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
+                        key = lambda x: (course_order.index(x[0]) if x[0] in course_order else float('inf'), x[1]['修畢學期']))
         self.sort_historical_courses = sorted_courses
 
     def print_sorted_historical_courses(self):
-        print(f'總共修習{len(self.historical_course_list)}門課程')
-        print(f"-" * 100)
-        for credit_type in self.order:
-            print(f'{credit_type}: {len(self.sort_historical_courses[credit_type])}門課程')
-            print(f"-" * 100)
-            for i, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start = 1):
-                print(f"{i}. {course}:")
-                print(f"\t課程代碼: {course_dict['課程代碼']}")
-                print(f"\t學分數: {course_dict['學分數']}學分")
-                print(f"\t期程: {course_dict['期程']}")
-                print(f"\t性質: {course_dict['課程性質']}")
-                print(f"\t修畢學期: {course_dict['修習時間']}")
-                print(f"\t分數: {course_dict['分數']}")
-                print(f"\t必修/核心/選修: {course_dict['課程所屬學程性質']}")
-                print(f"\t四大類類別: {course_dict['四大類類別']}")
-                print(f"\t審查備註: {course_dict.get('審查備註', '無')}")
-            print(f"-" * 100)
+        print(f'總共修習{len(self.historical_course_list)}門課程，已修過{self.pass_credits}學分，正在修習{self.current_credits}學分')
+        print(f"{'-' * 100}")
+        for i, credit_type in enumerate(self.order, start = 1):
+            print(f'{i}. {credit_type}: {len(self.sort_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分')
+            print(f"{'-' * 100}")
+            for j, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start = 1):
+                print(f" {j}. {course}:")
+                print(f" \t課程代碼: {course_dict['課程代碼']}")
+                print(f" \t學分數: {course_dict['學分數']}學分")
+                print(f" \t期程: {course_dict['期程']}")
+                print(f" \t性質: {course_dict['課程性質']}")
+                print(f" \t修畢學期: {course_dict['修畢學期']}")
+                print(f" \t分數: {course_dict['分數']}")
+                print(f" \t必修/核心/選修: {course_dict['課程所屬學程性質']}")
+                print(f" \t天人物我類別: {course_dict['天人物我類別']}")
+                print(f" \t資工四大類類別: {course_dict['資工四大類類別']}")
+                print(f" \t審查備註: {course_dict.get('審查備註', '無')}")
+            print(f"{'-' * 100}")
             print()
     
     def write_sorted_historical_courses(self):
         with open('./Generated/歷年修課.txt', 'w', encoding='utf-8') as file:
-            file.write(f'共修習{len(self.historical_course_list)}門課程\n')
+            file.write(f'總共修習{len(self.historical_course_list)}門課程，已修過{self.pass_credits}學分，正在修習{self.current_credits}學分\n')
             file.write(f"{'-' * 100}\n")
-            for credit_type in self.order:
-                file.write(f'{credit_type}: {len(self.sort_historical_courses[credit_type])}門課程\n')
+            for i, credit_type in enumerate(self.order, start = 1):
+                file.write(f'{i}. {credit_type}: {len(self.sort_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分\n')
                 file.write(f"{'-' * 100}\n")
                 
-                for i, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start=1):
-                    file.write(f"{i}. {course}:\n")
-                    file.write(f"\t課程代碼: {course_dict['課程代碼']}\n")
-                    file.write(f"\t學分數: {course_dict['學分數']}學分\n")
-                    file.write(f"\t期程: {course_dict['期程']}\n")
-                    file.write(f"\t性質: {course_dict['課程性質']}\n")
-                    file.write(f"\t修畢學期: {course_dict['修習時間']}\n")
-                    file.write(f"\t分數: {course_dict['分數']}\n")
-                    file.write(f"\t必修/核心/選修: {course_dict['課程所屬學程性質']}\n")
-                    file.write(f"\t四大類類別: {course_dict['四大類類別']}\n")
-                    file.write(f"\t審查備註: {course_dict.get('審查備註', '無')}\n")
+                for j, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start=1):
+                    file.write(f" {j}. {course}:\n")
+                    file.write(f" \t課程代碼: {course_dict['課程代碼']}\n")
+                    file.write(f" \t學分數: {course_dict['學分數']}學分\n")
+                    file.write(f" \t期程: {course_dict['期程']}\n")
+                    file.write(f" \t性質: {course_dict['課程性質']}\n")
+                    file.write(f" \t修畢學期: {course_dict['修畢學期']}\n")
+                    file.write(f" \t分數: {course_dict['分數']}\n")
+                    file.write(f" \t必修/核心/選修: {course_dict['課程所屬學程性質']}\n")
+                    file.write(f" \t天人物我類別: {course_dict['天人物我類別']}\n")
+                    file.write(f" \t資工四大類類別: {course_dict['資工四大類類別']}\n")
+                    file.write(f" \t審查備註: {course_dict.get('審查備註', '無')}\n")
                 
                 file.write(f"{'-' * 100}\n\n")

@@ -38,8 +38,10 @@ def generate_info(enroll_year):
         info = StudentInfo(enroll_year, basic_rules, credit_details)
         info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
+        """ if detect not enough
         if input('若自由選修不足，是否要自動判斷可認列之課程並分配至自由選修(Y/N)? ') == 'Y':
             info.automatically_distribute_free_elective_courses()
+        """
         info.sort_historical_courses()
         #info.print_sorted_historical_courses()
         info.write_sorted_historical_courses()
