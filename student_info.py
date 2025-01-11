@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from bs4 import BeautifulSoup
 
 class StudentInfo:
@@ -57,6 +58,14 @@ class StudentInfo:
             '9': '我'
         }
         self.historical_course_list = [] # 歷年修課清單
+        self.unfinished_courses = { # 未修的課
+            '基本知能': [],
+            '通識基礎必修': [],
+            '通識延伸選修': [],
+            '學系必修': [],
+            '學系選修': [],
+            '自由選修': []
+        }
         self.sorted_historical_courses = [] # 按照self.order排序的歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
         self.chose_list = [] # 已選上的課程清單
@@ -309,10 +318,6 @@ class StudentInfo:
                 }
             self.track_list = temp_dict
     
-    # TODO: 智慧偵測並分配自由選修
-    def automatically_distribute_free_elective_courses(self):
-        pass
-    
     def sort_historical_courses(self):
         # sort by self.order
         sorted_courses = {credit_type: [] for credit_type in self.order}
@@ -373,15 +378,196 @@ class StudentInfo:
                         '環境服務學習（一）', '環境服務學習（二）']
                     sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
                         key = lambda x: (course_order.index(x[0]) if x[0] in course_order else float('inf'), x[1]['修畢學期']))
-        self.sort_historical_courses = sorted_courses
+        self.sorted_historical_courses = sorted_courses
+
+    # TODO: 根據學程判斷並增加未修的學系必修與學系選修
+    def set_unfinished_courses(self):
+        basic_mapping = {
+            '基本知能': {
+                '英文(一)': False,
+                '英文(二)': False,
+                '實用英文（一）': False,
+                '實用英文（二）': False,
+                '英語聽講(一)': False,
+                '英語聽講(二)': False,
+                '體育一': False
+            },
+            '通識基礎必修': {
+                '宗教哲學': False,
+                '人生哲學': False,
+                '台灣政治與民主': False,
+                '法律與現代生活': False,
+                '當代人權議題與挑戰': False,
+                '生活社會學': False,
+                '全球化大議題': False,
+                '經濟學的世界': False,
+                '區域文明史': False,
+                '文化思想史': False,
+                '運算思維與程式設計': False,
+                '自然科學與人工智慧導論': False, # 自然科學與人工智慧
+                '文學經典閱讀': False,
+                '語文與修辭': False
+            },
+            '學系必修': {
+                '微積分(上)': False,
+                '微積分(下)': False,
+                '普通物理(一)': False,
+                '普通物理(二)': False,
+                '普通物理實驗(一)': False,
+                '普通物理實驗(二)': False,
+                '計算機概論(一)': False,
+                '計算機概論(二)': False,
+                '線性代數': False,
+                '機率與統計': False, # 機率與統計(一)
+                '電子學(一)': False,
+                '電子實驗(一)': False, # 電子實驗
+                '電路學(一)': False,
+                '電路實驗(一)': False, # 電路實驗
+                '專題製作(一)': False,
+                '專題製作(二)': False
+            },
+            '通識延伸選修': {
+                '工程倫理': False # 需為電資學院開課，但資料不足無法判斷
+            }
+        }
+        free_pe_courses = [] # 除了體育一之外的體育課, len 要 >= 3
+        free_four_religion_types = { # 通識延伸選修
+            '天': '0',
+            '人': '0',
+            '物': '0',
+            '我': '0'
+        }
+
+        # fetch program courses
+        major_status = {}
+        for major in ['主修學程一', '主修學程二', '副修學程']:
+            major_status[major] = {}
+            for cur_type in ['必修', '核心', '選修']:
+                major_status[major][cur_type] = {}
+                if not(self.majors[major]['對應xlsx名'] == '資工' and cur_type == '選修'):
+                    major_status[major][cur_type] = {
+                        course: False for course in self.credit_details[self.majors[major]['對應xlsx名']] \
+                            [self.majors[major]['學程名稱']][cur_type]['課程']
+                    }
+                else:
+                    major_status[major][cur_type] = {
+                        course: False for four_type in self.credit_details['資工'][self.majors[major]['學程名稱']][cur_type]['認列四大類'] \
+                            for course in self.credit_details['資工']['四大類'][four_type]['課程'] # key必為唯一所以不用檢查重複
+                    }
+
+        # calculate
+        for credit_type, courses in self.sorted_historical_courses.items():
+            for course, course_dict in courses:
+                match(credit_type):
+                    case '基本知能':
+                        if course in basic_mapping[credit_type]:
+                            basic_mapping[credit_type][course] = True
+                        elif 'GR' in course_dict['課程代碼'] or \
+                            course in ['體育二', '體育三', '體育四', '體育五', '體育六']:
+                            free_pe_courses.append(course)
+                    case '通識基礎必修':
+                        if course in basic_mapping[credit_type]:
+                            basic_mapping[credit_type][course] = True
+                        elif course == '自然科學與人工智慧':
+                            basic_mapping[credit_type]['自然科學與人工智慧導論'] = True
+                    case '學系必修':
+                        if course in basic_mapping[credit_type]:
+                            basic_mapping[credit_type][course] = True
+                        elif course == '機率與統計(一)':
+                            basic_mapping[credit_type]['機率與統計'] = True
+                        elif course == '電子實驗':
+                            basic_mapping[credit_type]['電子實驗(一)'] = True
+                        elif course == '電路實驗':
+                            basic_mapping[credit_type]['電路實驗(一)'] = True
+                    case '學系選修':
+                        for major in ['主修學程一', '主修學程二', '副修學程']:
+                            for cur_type in ['必修', '核心', '選修']:
+                                if course in major_status[major][cur_type]:
+                                    major_status[major][cur_type][course] = True
+                    case '通識延伸選修':
+                        if course in basic_mapping[credit_type]:
+                            basic_mapping[credit_type][course] = True
+                        else:
+                            free_four_religion_types[course_dict['天人物我類別']] = \
+                                str(int(free_four_religion_types[course_dict['天人物我類別']]) + \
+                                    int(course_dict['學分數']))
+                    case '自由選修':
+                        pass
+                    case _:
+                        pass
+        
+        # judge and append unfinished courses
+        for credit_type in ['基本知能', '通識基礎必修', '通識延伸選修', '學系必修', '學系選修', '自由選修']:
+            if credit_type == '基本知能':
+                for course, is_finished in basic_mapping[credit_type].items():
+                    if not is_finished:
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 9)
+                if len(free_pe_courses) < 3:
+                    chinese_num_mapping = { 1: '一', 2: '二', 3: '三' }
+                    for i in range(3 - len(free_pe_courses)):
+                        self.unfinished_courses[credit_type].append([f'體育興趣{chinese_num_mapping[i + 1]}'] + [''] * 6 + ['未修習'] + [''] * 9)
+            elif credit_type == '通識基礎必修':
+                four_types = ['天', '人', '物', '我']
+                has_citizen = False
+                has_history = False
+                course_four_type_mapping = { course: '' for course in basic_mapping[credit_type] }
+                for course, is_finished in basic_mapping[credit_type].items():
+                    for four_type in four_types:
+                        if course in self.basic_rules[credit_type][four_type]:
+                            course_four_type_mapping[course] = four_type
+                            if four_type == '人' and is_finished:
+                                if self.basic_rules[credit_type]['人'][course]['性質'] == '公民':
+                                    has_citizen = True
+                                else:
+                                    has_history = True
+                            break
+                for course, is_finished in basic_mapping[credit_type].items():
+                    if not is_finished:
+                        if course_four_type_mapping[course] == '人':
+                            if (self.basic_rules[credit_type]['人'][course]['性質'] == '公民' and has_citizen) or \
+                                (self.basic_rules[credit_type]['人'][course]['性質'] == '歷史' and has_history):
+                                continue
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習', f] + [''] * 8)
+            elif credit_type == '通識延伸選修':
+                # 確認天人物我最低學分數
+                for four_type, num in free_four_religion_types.items():
+                    if int(num) < self.basic_rules[credit_type][four_type]['最低應修學分數']:
+                        remaining_credits = str(self.basic_rules[credit_type][four_type]['最低應修學分數'] - int(num))
+                        course_name = ''
+                        orc = '' # 其它備註 other review comments
+                        if four_type == '人' and not basic_mapping[credit_type]['工程倫理']:
+                            course_name = '工程倫理'
+                            orc = '需為電資學院指定'
+                        self.unfinished_courses[credit_type].append([course_name, '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 8 + [orc])
+                # 確認畢業應修最低學分數
+                if int(self.sub_total_credits[credit_type]) < self.basic_rules['畢業應修最低學分數'][credit_type]:
+                    remaining_credits = str(self.basic_rules['畢業應修最低學分數'][credit_type] - int(self.sub_total_credits[credit_type]))
+                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 9)
+            elif credit_type == '學系必修':
+                for course, is_finished in basic_mapping[credit_type].items():
+                    if not is_finished:
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 9)
+            elif credit_type == '學系選修':
+                # TODO
+                pass
+            else: # 自由選修
+                if int(self.sub_total_credits[credit_type]) < self.basic_rules['畢業應修最低學分數'][credit_type]:
+                    remaining_credits = str(self.basic_rules['畢業應修最低學分數'][credit_type] - int(self.sub_total_credits[credit_type]))
+                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 9)
+        #print(self.unfinished_courses)
+    
+    # TODO: 智慧偵測並分配自由選修
+    # 會需要改動self.sub_total_credits等
+    def detect_and_distribute_free_elective_courses(self):
+        pass
 
     def print_sorted_historical_courses(self):
         print(f'總共修習{len(self.historical_course_list)}門課程，已修過{self.pass_credits}學分，正在修習{self.current_credits}學分')
         print(f"{'-' * 100}")
         for i, credit_type in enumerate(self.order, start = 1):
-            print(f'{i}. {credit_type}: {len(self.sort_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分')
+            print(f'{i}. {credit_type}: {len(self.sorted_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分')
             print(f"{'-' * 100}")
-            for j, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start = 1):
+            for j, (course, course_dict) in enumerate(self.sorted_historical_courses[credit_type], start = 1):
                 print(f" {j}. {course}:")
                 print(f" \t課程代碼: {course_dict['課程代碼']}")
                 print(f" \t學分數: {course_dict['學分數']}學分")
@@ -397,14 +583,19 @@ class StudentInfo:
             print()
     
     def write_sorted_historical_courses(self):
+        # json
+        with open('./Generated/歷年修課.json', 'w', encoding='utf-8') as file:
+            file.write(json.dumps(self.sorted_historical_courses, indent = 4, ensure_ascii = False))
+        
+        # txt
         with open('./Generated/歷年修課.txt', 'w', encoding='utf-8') as file:
             file.write(f'總共修習{len(self.historical_course_list)}門課程，已修過{self.pass_credits}學分，正在修習{self.current_credits}學分\n')
             file.write(f"{'-' * 100}\n")
             for i, credit_type in enumerate(self.order, start = 1):
-                file.write(f'{i}. {credit_type}: {len(self.sort_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分\n')
+                file.write(f'{i}. {credit_type}: {len(self.sorted_historical_courses[credit_type])}門課程，共計{self.sub_total_credits[credit_type]}學分\n')
                 file.write(f"{'-' * 100}\n")
                 
-                for j, (course, course_dict) in enumerate(self.sort_historical_courses[credit_type], start=1):
+                for j, (course, course_dict) in enumerate(self.sorted_historical_courses[credit_type], start=1):
                     file.write(f" {j}. {course}:\n")
                     file.write(f" \t課程代碼: {course_dict['課程代碼']}\n")
                     file.write(f" \t學分數: {course_dict['學分數']}學分\n")

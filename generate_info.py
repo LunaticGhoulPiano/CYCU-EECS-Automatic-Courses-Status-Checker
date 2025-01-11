@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import time
 import pandas as pd
 import openpyxl
 from openpyxl import Workbook
@@ -24,86 +25,104 @@ def get_char_width(ch): # 中文、全型字元寬度為兩倍
 
 def generate(info):
     # init workbook
+    excel_file_path = f'./Generated/總表.xlsx'
     wb = Workbook()
     ws = wb.active
+
+    # 1. worksheet 0: status
     ws.title = '修課狀態表'
+    max_cell_width = [0 for _ in range(17)] # 17 columns
 
-    # 16 columns
-    max_cell_width = [0 for _ in range(16)]
-
-    # set head contents
+    ## set head contents
     head = []
-    ## append-something
+    major_header = [f"主修學程一：{info.majors['主修學程一']['所屬學系']} - {info.majors['主修學程一']['學程名稱']}", \
+            f"主修學程二：{info.majors['主修學程二']['所屬學系']} - {info.majors['主修學程二']['學程名稱']}", \
+                f"副修學程：{info.majors['副修學程']['所屬學系']} - {info.majors['副修學程']['學程名稱']}"]
+    head.append([''] * 9 + major_header + [''] + major_header + ['']) # TODO: 將第13個cell設為資工四大類條件
     
-    # set body contents
+    ## set body contents
     body = []
-    for idx, (credit_type, course) in enumerate(info.sort_historical_courses.items(), start = 1): # list
+    for idx, (credit_type, course) in enumerate(info.sorted_historical_courses.items(), start = 1): # list
+        ### write header
         row_header = [f'{idx}. {credit_type}', '課程代碼', '學分數', '期程', '修畢學期', \
             '課程性質', '分數', '修課狀態', '天人物我類別', \
-                '主修學程一之必修/核心/選修', '主修學程二之必修/核心/選修', '副修學程之必修/核心/選修', \
-                    '資工四大類類別', '主修學程一之課程審查備註', '主修學程一之課程審查備註', '副修學程之課程審查備註']
+                '主修學程一之必修 / 核心 / 選修', '主修學程二之必修 / 核心 / 選修', '副修學程之必修 / 核心 / 選修', \
+                    '資工四大類類別', '主修學程一之課程審查備註', '主修學程二之課程審查備註', '副修學程之課程審查備註', '其它備註']
         body.append(row_header)
+
+        ### write content
         for course_name, course_dict in course: # tuple
             course_property = ' / '.join([p for p in course_dict['課程性質'] if p != ''])
             cs_four_type = ' / '.join([t for t in course_dict['資工四大類類別'] if t != ''])
             row_content = [course_name, course_dict['課程代碼'], course_dict['學分數'], course_dict['期程'], course_dict['修畢學期'], \
                 course_property, course_dict['分數'], course_dict['修課狀態'], course_dict['天人物我類別'], \
                     course_dict['課程所屬學程性質']['主修學程一'], course_dict['課程所屬學程性質']['主修學程二'], course_dict['課程所屬學程性質']['副修學程'], \
-                        cs_four_type, course_dict['審查備註']['主修學程一'], course_dict['審查備註']['主修學程二'], course_dict['審查備註']['副修學程']]
-            # write row content
+                        cs_four_type, course_dict['審查備註']['主修學程一'], course_dict['審查備註']['主修學程二'], course_dict['審查備註']['副修學程'], '']
             body.append(row_content)
-        # TODO: 新增未修的必修課
+        
+        ### write unfinished courses
+        if credit_type in info.unfinished_courses and info.unfinished_courses[credit_type] != []:
+            body += info.unfinished_courses[credit_type]
+        
+        ### write total credits
+        body.append(['已修畢+正在修習之合計學分數', '', info.sub_total_credits[credit_type]] + [''] * 14)
     
-    # set tail contents
-    tail = []
-    ## append-something
-    
-    # write everything to ws
     ## set cell width
-    ### TODO: correct max cell width
-    for part in [head, body, tail]:
+    for part in [head, body]:
         for row in part:
             for i, cell in enumerate(row):
                 cell_length = sum(get_char_width(c) for c in str(cell))
-                #print(f'\'{cell}\', length: {cell_length}, max_cell_width[{i}]: {max_cell_width[i]}', end='')
                 if cell_length > max_cell_width[i]:
                     max_cell_width[i] = cell_length
-                #    print(' 更新')
-                #else:
-                #    print(' 不')
-    ### set column width
-    for i in range(16):
+    for i in range(17):
         ws.column_dimensions[chr(65 + i)].width = max_cell_width[i] + 10 # offset
+    
     ## write head and set details
     head_start_row_index = 1
+    for row_index, row_data in enumerate(head, start = head_start_row_index):
+        for column_index, cell_data in enumerate(row_data, start = 1):
+            cell = ws.cell(row = row_index, column = column_index, value = cell_data)
+        if row_index == 1:
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = '4BACC6', end_color = '4BACC6', fill_type = 'solid')
+                ws.cell(row = row_index, column = column).font = Font(bold = True)
+        elif row_data[7] == '未通過':
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'FFFF00', end_color = 'FFFF00', fill_type = 'solid')
 
     ## write body and set details
-    body_row_header_fill = PatternFill(start_color = 'B7DEE8', end_color = 'B7DEE8', fill_type = 'solid')
-    body_row_header_font = Font(bold = True)
-    body_row_content_fill = PatternFill(start_color = 'FFFF00', end_color = 'FFFF00', fill_type = 'solid')
     body_start_row_index = head_start_row_index + len(head)
     for row_index, row_data in enumerate(body, start = body_start_row_index):
         for column_index, cell_data in enumerate(row_data, start = 1):
             cell = ws.cell(row = row_index, column = column_index, value = cell_data)
         if row_data[7] == '修課狀態':
-            for column in range(1, 17):
-                ws.cell(row = row_index, column = column).fill = body_row_header_fill
-                ws.cell(row = row_index, column = column).font = body_row_header_font
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'B7DEE8', end_color = 'B7DEE8', fill_type = 'solid')
+                ws.cell(row = row_index, column = column).font = Font(bold = True)
         elif row_data[7] == '正在修習':
-            for column in range(1, 17):
-                ws.cell(row = row_index, column = column).fill = body_row_content_fill
-    ## write tail and set details
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = '92D050', end_color = '92D050', fill_type = 'solid')
+        elif row_data[7] == '未修習':
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'FFFF00', end_color = 'FFFF00', fill_type = 'solid')
+        elif row_data[0] == '已修畢+正在修習之合計學分數':
+            for column in range(1, 18):
+                ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'FFBDF7', end_color = 'FFBDF7', fill_type = 'solid')
 
-    file_path = './Generated/總表.xlsx'
-    wb.save(file_path)
+    # TODO: 2. worksheet 1: future course table
+    ws = wb.create_sheet(title = '預排課表')
 
-    # TODO: calculate credits and still-need credits
-    # TODO: call function in info to generate status table
-    ## worksheet 0: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 修課狀態表
-    ## 7 columns for each row
-    # TODO: call function in info to generate future course table (if needed)
-    ## worksheet 1: 歷年修課.json + 選課系統_基本資料.json + 選課系統_總覽.json = 預排課表
-    # if already has excel file, then append in new worksheets
+    # TODO: 3. worksheet 2: major1's credit detail
+    ws = wb.create_sheet(title = f"主修學程一 {info.majors['主修學程一']['學程名稱']}")
+
+    # TODO: 4. worksheet 3: major2's credit detail
+    ws = wb.create_sheet(title = f"主修學程二 {info.majors['主修學程二']['學程名稱']}")
+
+    # TODO: 5. worksheet 4: sub major's credit detail
+    ws = wb.create_sheet(title = f"副修學程 {info.majors['副修學程']['學程名稱']}")
+
+    # save workbook
+    wb.save(excel_file_path)
 
 # read json files, and generate excel file of course status
 def generate_info(enroll_year):
@@ -119,9 +138,12 @@ def generate_info(enroll_year):
         info.read(basic_user_info, historical_courses, total_overview, course_properties)
         info.parse()
         info.sort_historical_courses()
+        info.set_unfinished_courses()
         #info.print_sorted_historical_courses()
         info.write_sorted_historical_courses()
+
         # generate
+        #print(info.unfinished_courses)
         generate(info)
     else:
         print('error')

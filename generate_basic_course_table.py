@@ -616,14 +616,16 @@ def parse_df_to_dict(df, department):
                         # Replace None with '' and merge all cells into one string
                         strings = [value if value is not None else '' \
                             for value in review_comment_contents.iloc[idx, :].values]
+                        
                         if cur_type not in program_dict:
                             if department == '資工':
                                 program_dict[cur_type] = {
                                     '課程': {}
                                 }
                             else:
+                                only_number = re.search(r'\d+', type_credits[program][cur_type]).group() if type_credits[program][cur_type] != '' else ''
                                 program_dict[cur_type] = {
-                                    '最低應修學分數': type_credits[program][cur_type],
+                                    '最低應修學分數': only_number,
                                     '課程': {}
                                 }
                         if course[1] is not None:
@@ -637,6 +639,17 @@ def parse_df_to_dict(df, department):
                 column_idx = program_indices[program] - 1
                 program_dict['審查備註'] = df.iloc[row_idx, column_idx]
         department_dict[program] = parse_context(department, program_dict)
+    
+    # 檢查非資工必修的最低應修學分數是否為空
+    for program, program_dict in department_dict.items():
+        if '資訊' not in program:
+            if program_dict['必修']['最低應修學分數'] == '':
+                temp_total_credits = 0
+                for course, course_dict in program_dict['必修']['課程'].items():
+                    if course_dict['學分數'] == '':
+                        course_dict['學分數'] = '3'
+                    temp_total_credits += int(course_dict['學分數'])
+                program_dict['必修']['最低應修學分數'] = str(temp_total_credits)
     return department_dict
 
 def extract_number_between_keywords(text, start_keyword, end_keyword):
@@ -646,7 +659,7 @@ def extract_number_between_keywords(text, start_keyword, end_keyword):
         return match.group(1)
     return None
 
-# et the graduate credit of single major and double major in CS
+# set the graduate credit of single major and double major in CS
 def parse_rules_of_single_and_double_cs(cs_dict):
     credit_mapping = {
         '單資工': {
