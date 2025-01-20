@@ -23,24 +23,6 @@ def get_char_width(ch): # 中文、全型字元寬度為兩倍
         return 2
     return 1
 
-def fetch_single_program_details(program_name):
-    if '資訊' not in program_name:
-        pass
-    else:
-        pass
-
-def write_program_details(info):
-    max_cell_width = [0 for _ in range(17)]
-    head = []
-    head.append([f"主修學程一：{info.majors['主修學程一']['學程名稱']}", '', '', '', \
-        f"主修學程二：{info.majors['主修學程二']['學程名稱']}", '', '', '', \
-        f"副修學程：{info.majors['副修學程']['學程名稱']}", '', '', ''])
-    
-    body = []
-    major1_details = fetch_single_program_details(info.majors['主修學程一']['學程名稱'])
-    major2_details = fetch_single_program_details(info.majors['主修學程二']['學程名稱'])
-    sub_major_details = fetch_single_program_details(info.majors['副修學程']['學程名稱'])
-
 def generate(info):
     # init workbook
     excel_file_path = f'./Generated/總表.xlsx'
@@ -209,8 +191,86 @@ def generate(info):
                     ws.cell(row = row_index, column = column_index).fill = PatternFill(start_color = 'FDE9D9', end_color = 'FDE9D9', fill_type = 'solid')
     
     # TODO: 3. worksheet 2: major1's credit detail
-    ws = wb.create_sheet(title = f"主副修學程規劃表")
-    #head, body, max_cell_width = write_program_details(info)
+    ws = wb.create_sheet(title = '主副修學程規劃表')
+    """
+    # testing
+    info.majors = { # 學程
+        '主修學程一': {
+            '學程名稱': '通訊學程',
+            '所屬學系': '電機工程學系',
+            '對應xlsx名': '通訊'
+        },
+        '主修學程二': {
+            '學程名稱': '品質管理學程',
+            '所屬學系': '工業與系統工程學系',
+            '對應xlsx名': '工業'
+        },
+        '副修學程': {
+            '學程名稱': '資訊硬體學程',
+            '所屬學系': '資訊工程學系',
+            '對應xlsx名': '資工'
+        },
+    }
+    """
+    credits_mapping = {}
+    if info.majors['主修學程一']['對應xlsx名'] == '資工' and info.majors['主修學程二']['對應xlsx名'] == '資工':
+        for key, value in info.credit_details['資工']['最低應修學分數']['雙資工']['必修+核心'].items():
+            total_credit = value if info.majors['主修學程一']['學程名稱'] in key and info.majors['主修學程二']['學程名稱'] in key else '0'
+        credits_mapping['主修學程一'] = {
+            '必修': {
+                '基本要求': '需全修',
+                '額外要求': f'兩主修學程必修+核心合計應修{total_credit}學分'
+            },
+            '核心': {
+                '基本要求': '需全修',
+                '額外要求': f'兩主修學程必修+核心合計應修{total_credit}學分'
+            },
+            '選修': {
+                '基本要求': f"最低應修{info.credit_details['資工']['最低應修學分數']['雙資工']['選修各學程']}學分",
+                '額外要求': f"兩主修學程選修最低合計應修{info.credit_details['資工']['最低應修學分數']['雙資工']['選修總共']}學分"
+            }
+        }
+        credits_mapping['主修學程二'] = credits_mapping['主修學程一']
+    else:
+        for major in ['主修學程一', '主修學程二']:
+            if info.majors[major]['對應xlsx名'] == '資工':
+                credits_mapping[major] = {
+                    '必修': {
+                        '基本要求': '應全修',
+                        '額外要求': f"共應修{info.credit_details['資工']['最低應修學分數']['單資工']['必修'][info.majors[major]['學程名稱']]}學分"
+                    },
+                    '核心': {
+                        '基本要求': f"最低應修{info.credit_details['資工']['最低應修學分數']['單資工']['核心']}學分",
+                        '額外要求': ''
+                    },
+                    '選修': { '基本要求': '', '額外要求': '' } }
+            else:
+                credits_mapping[major] = {
+                    '必修': {
+                        '基本要求': f"最低應修{info.credit_details[info.majors[major]['對應xlsx名']][info.majors[major]['學程名稱']]['必修']['最低應修學分數']}學分",
+                        '額外要求': ''
+                    },
+                    '核心': {
+                        '基本要求': f"最低應修{info.credit_details[info.majors[major]['對應xlsx名']][info.majors[major]['學程名稱']]['核心']['最低應修學分數']}學分",
+                        '額外要求': ''
+                    },
+                    '選修': {
+                        '基本要求': f"最低應修{info.credit_details[info.majors[major]['對應xlsx名']][info.majors[major]['學程名稱']]['選修']['最低應修學分數']}學分",
+                        '額外要求': ''
+                    }
+                }
+    credits_mapping['副修學程'] = {
+        '必修': { '基本要求': '', '額外要求': '' },
+        '核心': { '基本要求': '', '額外要求': '' },
+        '選修': { '基本要求': '', '額外要求': '' } }
+    
+    # set headers
+    basic_header = [f"主修學程一：{info.majors['主修學程一']['學程名稱']}", '',  '', f"主修學程二：{info.majors['主修學程二']['學程名稱']}", '', '', f"副修學程一：{info.majors['副修學程']['學程名稱']}", '', '']
+    must_header = ['必修課程', credits_mapping['主修學程一']['必修']['基本要求'], credits_mapping['主修學程一']['必修']['額外要求'], '必修課程', credits_mapping['主修學程二']['必修']['基本要求'], credits_mapping['主修學程二']['必修']['額外要求'], '必修課程', credits_mapping['副修學程']['必修']['基本要求'], credits_mapping['副修學程']['必修']['額外要求']]
+    core_header = ['核心課程', credits_mapping['主修學程一']['核心']['基本要求'], credits_mapping['主修學程一']['核心']['額外要求'], '核心課程', credits_mapping['主修學程二']['核心']['基本要求'], credits_mapping['主修學程二']['核心']['額外要求'], '核心課程', credits_mapping['副修學程']['核心']['基本要求'], credits_mapping['副修學程']['核心']['額外要求']]
+    elect_header = ['核心課程', credits_mapping['主修學程一']['選修']['基本要求'], credits_mapping['主修學程一']['選修']['額外要求'], '選修課程', credits_mapping['主修學程二']['選修']['基本要求'], credits_mapping['主修學程二']['選修']['額外要求'], '選修課程', credits_mapping['副修學程']['選修']['基本要求'], credits_mapping['副修學程']['選修']['額外要求']]
+    basic_sub_header = ['課程名稱', '學分數', '審查備註', '課程名稱', '學分數', '審查備註', '課程名稱', '學分數', '審查備註']
+    
 
     # save workbook
     wb.save(excel_file_path)
