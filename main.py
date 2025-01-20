@@ -75,4 +75,7 @@ if __name__ == "__main__":
             with open(ENV_PATH, 'w', encoding = 'utf-8') as f:
                 f.write('USR_ID=\n')
                 f.write('USR_PWD=\n')
+                f.write('USR_MAJOR1=\n')
+                f.write('USR_MAJOR2=\n')
+                f.write('USR_SUB_MAJOR=\n')
     main()

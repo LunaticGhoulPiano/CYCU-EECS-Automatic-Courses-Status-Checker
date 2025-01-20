@@ -65,14 +65,14 @@ def generate(info):
         row_header = [f'{idx}. {credit_type}', '課程代碼', '學分數', '期程', '修畢學期', \
             '課程性質', '分數', '修課狀態', '天人物我類別', \
                 '主修學程一之必修 / 核心 / 選修', '主修學程二之必修 / 核心 / 選修', '副修學程之必修 / 核心 / 選修', \
-                    '資工四大類類別', '最終認定所屬資工四大類類別', '主修學程一之課程審查備註', '主修學程二之課程審查備註', '副修學程之課程審查備註', '其它備註']
+                    '資工四大類類別', '最終認定所屬主修學程', '主修學程一之課程審查備註', '主修學程二之課程審查備註', '副修學程之課程審查備註', '其它備註']
         body.append(row_header)
 
         ### write content
         for course_name, course_dict in course: # tuple
             course_property = ' / '.join([p for p in course_dict['課程性質'] if p != ''])
             cs_four_type = ' / '.join([t for t in course_dict['資工四大類類別'] if t != ''])
-            final_four_type = course_dict['最終認定所屬資工四大類類別'] if '最終認定所屬資工四大類類別' in course_dict else ''
+            final_four_type = course_dict['最終認定所屬主修學程'] if '最終認定所屬主修學程' in course_dict else ''
             row_content = [course_name, course_dict['課程代碼'], course_dict['學分數'], course_dict['期程'], course_dict['修畢學期'], \
                 course_property, course_dict['分數'], course_dict['修課狀態'], course_dict['天人物我類別'], \
                     course_dict['課程所屬學程性質']['主修學程一'], course_dict['課程所屬學程性質']['主修學程二'], course_dict['課程所屬學程性質']['副修學程'], \

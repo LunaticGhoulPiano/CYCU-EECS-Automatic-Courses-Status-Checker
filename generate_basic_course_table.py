@@ -4,6 +4,9 @@ import re
 import json
 import openpyxl
 import pandas as pd
+from dotenv import load_dotenv, set_key
+
+ENV_PATH = '.env'
 
 class DuplicateProgramError(Exception):
     def __init__(self, message):
@@ -338,19 +341,43 @@ def generate_table(path, enroll_year):
                     '對應xlsx名': '資工'
                 }
             }
-            print(' 本系共有以下學程:')
+            usr_major1 = os.getenv('USR_MAJOR1')
+            usr_major2 = os.getenv('USR_MAJOR2')
+            usr_sub_major = os.getenv('USR_SUB_MAJOR')
+            if usr_major1 and usr_major2 and usr_sub_major:
+                if input(' 是否要重設學程?(Y/N) ') == 'Y':
+                    usr_major1 = usr_major2 = usr_sub_major = None
+            if not usr_major1 or not usr_major2 or not usr_sub_major:
+                print(' 本系共有以下學程:')
             mapping = {}
             for idx, program in enumerate(programs):
-                print(f'  {idx+1}. {program} - 所屬學系: {programs[program]["所屬學系"]}')
+                if not usr_major1 or not usr_major2 or not usr_sub_major:
+                    print(f'  {idx+1}. {program} - 所屬學系: {programs[program]["所屬學系"]}')
                 mapping[str(idx+1)] = program
             cache = []
             for program in ['主修學程一', '主修學程二', '副修學程']:
                 while True:
                     try:
-                        p = mapping[input(f'> 請輸入{program}的編號 (如\"1\"表示生產管理學程): ')]
+                        if not usr_major1 or not usr_major2 or not usr_sub_major:
+                            major_num = input(f'> 請輸入{program}的編號 (如\"1\"表示生產管理學程): ')
+                            p = mapping[major_num]
+                        else:
+                            if program == '主修學程一':
+                                p = usr_major1
+                            elif program == '主修學程二':
+                                p = usr_major2
+                            elif program == '副修學程':
+                                p = usr_sub_major
                         if p in cache:
                             raise DuplicateProgramError('  學程重複，請重新輸入。')
                         else:
+                            if not usr_major1 or not usr_major2 or not usr_sub_major:
+                                if program == '主修學程一':
+                                    set_key(ENV_PATH, 'USR_MAJOR1', p)
+                                elif program == '主修學程二':
+                                    set_key(ENV_PATH, 'USR_MAJOR2', p)
+                                elif program == '副修學程':
+                                    set_key(ENV_PATH, 'USR_SUB_MAJOR', p)
                             temp_dict[program] = p
                             temp_dict[f'{program}所屬學系'] = programs[p]['所屬學系']
                             cache.append(p)
@@ -843,10 +870,5 @@ def generate_basic_course_table(enroll_year):
     os.makedirs(path, exist_ok = True)
     # manual setting
     print('> 正在產生修課規定:')
-    if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
-        # TODO: 改為是否重設學程
-        if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
-            return
-    
     generate_table(path, enroll_year)
     get_program_info(path, enroll_year)

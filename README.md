@@ -10,21 +10,13 @@
 
 ## TODOs:
 1. 智慧分配自由選修
-2. 判斷學系選修還沒修到的必修/核心/選修課
-3. 將雙資工的對應所需四大類及數量寫入到總表.xlsx的worksheet0(generate_info.py: ```generate()```的```head.append()```處)
-4. 按照選課系統已選上課程產生預排課表並寫入到總表.xlsx的worksheet 1
-5. 將主修學程一、主修學程二、副修學程的必修/核心/選修寫入到總表.xlsx的worksheet 2 ~ 4
-6. 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
-7. 其它:
+2. 判斷單資工&非資工學程
+3. 按照選課系統已選上課程產生預排課表並寫入到總表.xlsx的worksheet 1
+4. 將主修學程一、主修學程二、副修學程的必修/核心/選修寫入到總表.xlsx的worksheet 2 ~ 4
+5. 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
+6. 其它:
     - 搞清楚```student_info.parse()```中的以下問題：
-        1. 解決工程數學(一)的問題：
-            - 是否為學系必修（應修科目表沒寫，但大一下時系所自動排課）
-            - 電子系、電機系與通訊學程的"學程選修-必修"
-        2. 系統程式113入學前為：
-            - 資訊硬體學程：核心
-            - 資訊軟體學程：必修
-            - 資訊應用學程：核心
-        3. 輔系、雙主修的判斷
+        - 輔系、雙主修的判斷
     - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
     - 抓線上表單選課作業（optional）
     - 找同學/學弟妹測試系統
@@ -68,7 +60,8 @@
 
 ## 執行
 - Python：
-    1. git clone到你的電腦：
+    0. 安裝好Python(本人使用3.11.7)
+    1. git clone到你的電腦 or 點選```Code``` - ```Download ZIP```下載並解壓縮：
         ```
         git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
         ```
@@ -120,6 +113,8 @@
         - 當兩主修學程學分總和 < 15且此課程對應的任一四大類屬於兩學程的任一四大類就加入
     - stage 4:
         - 將剩餘的加入對應的主修學程/其它
+- 可改善：
+    - 優先選擇不可抵認自由選修的課程
 
 ## 非資工學程(TODO)
 - 目前必修/核心的課程如果跨學程有相同課名不可兩邊互相抵認，要讓教授人工判斷

@@ -241,7 +241,7 @@ class StudentInfo:
                                         temp_dict[course_name]['學分性質'] = '學系選修'
                                         temp_dict[course_name]['課程所屬學程性質'][major] = cur_type
                                         temp_dict[course_name]['資工四大類類別'].append(four_type)
-                                        temp_dict[course_name]['最終認定所屬資工四大類類別'] = ''
+                                        temp_dict[course_name]['最終認定所屬主修學程'] = ''
                                         temp_dict[course_name]['審查備註'][major] = self.credit_details[major_info['對應xlsx名']]['四大類']['審查備註']
                     # 電資學系選修: 'UP'
                     if temp_dict[course_name]['學分性質'] == '' and \
@@ -694,7 +694,7 @@ class StudentInfo:
                                         # write back the final four type
                                         for c_set in self.sorted_historical_courses[credit_type]: # c_set[0]: course name, c_set[1]: course dict
                                             if c_set[1]['資工四大類類別'] != []:
-                                                c_set[1]['最終認定所屬資工四大類類別'] = program_of_course[c_set[0]] if program_of_course[c_set[0]] != '其它' else ''
+                                                c_set[1]['最終認定所屬主修學程'] = program_of_course[c_set[0]] if program_of_course[c_set[0]] != '其它' else ''
                                         
                                         # write back the still-need credit msgs
                                         accumulated_credit = 0
