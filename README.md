@@ -60,12 +60,12 @@
 
 ## 執行
 - Python：
-    0. 安裝好Python(本人使用3.11.7)
-    1. git clone到你的電腦 or 點選```Code``` - ```Download ZIP```下載並解壓縮：
+    1. 安裝好Python(本人使用3.11.7)
+    2. git clone到你的電腦 or 點選```Code``` - ```Download ZIP```下載並解壓縮：
         ```
         git clone https://github.com/LunaticGhoulPiano/CYCU-EECS-Automatic-Courses-Status-Checker.git
         ```
-    2. 安裝所需libraries：
+    3. 安裝所需libraries：
         - Windows:
             ```
             python -m pip install -r requirements.txt
@@ -74,7 +74,7 @@
             ```
             python3 -m pip install -r requirements.txt
             ```
-    3. 安裝```playwright```所需瀏覽器（本次使用Chromium）：
+    4. 安裝```playwright```所需瀏覽器（本次使用Chromium）：
         - Windows:
             ```
             python -m playwright install
@@ -83,7 +83,7 @@
             ```
             python3 -m playwright install
             ```
-    4. 執行：
+    5. 執行：
         - Windows:
             ```
             python main.py
