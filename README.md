@@ -7,14 +7,20 @@
 - 根據入學年度（以是否有在[官網提供的應修科目表](https://bseecs.cycu.edu.tw/%e5%ad%b8%e7%94%9f%e5%ad%b8%e7%bf%92/%e6%87%89%e4%bf%ae%e7%a7%91%e7%9b%ae%e8%a1%a8%e5%8f%8a%e4%bf%ae%e8%aa%b2%e9%a0%88%e7%9f%a5/)中為準）自動產生畢業條件到```./Generated/{入學年度}_基本畢業條件.json```
 - 根據以上資料自動產生電資學院四大系十一大學程之詳細資料到```./Generated/各學程之必修_核心_選修總表.json```
 - 到[MyMentor](https://cmap.cycu.edu.tw:8443/MyMentor/index.do)自動爬取```檢視自我學習狀況-歷年修課清單一覽表```到```./CYCU-MySelf/歷年修課與狀態表.html```
+- 產生```總表.xlsx```：
+    - ```修課狀態表```:
+        - 將修過的課程+正在修的課程+尚缺哪些課程繪製成一張大表
+        - 目前未做：
+            - 單資工學程的未完成課程
+            - 非資工學程的未完成課程
+            - 自由選修自動找可以用的課去補
 
 ## TODOs:
 1. 智慧分配自由選修
 2. 判斷單資工&非資工學程
-3. 按照選課系統已選上課程產生預排課表並寫入到總表.xlsx的worksheet 1
-4. 將主修學程一、主修學程二、副修學程的必修/核心/選修寫入到總表.xlsx的worksheet 2 ~ 4
-5. 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
-6. 其它:
+3. 將主修學程一、主修學程二、副修學程的必修/核心/選修寫入到總表.xlsx的worksheet 2
+4. 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
+5. 其它:
     - 搞清楚```student_info.parse()```中的以下問題：
         - 輔系、雙主修的判斷
     - 處理檔案已存在要不要覆蓋的問題（應該只有```./Generated```中的檔案要考慮）
