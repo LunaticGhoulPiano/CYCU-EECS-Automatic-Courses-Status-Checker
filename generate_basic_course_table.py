@@ -631,7 +631,7 @@ def parse_df_to_dict(df, department):
                         if course[1] is not None:
                             program_dict[cur_type]['課程'][course[1]] = {
                                 '學分數': None,
-                                '審查備註': '；'.join(string for string in strings if string != '')
+                                '審查備註': '；'.join(string.strip() for string in strings if string != '')
                             }
             else:
                 # set review comment
@@ -844,6 +844,7 @@ def generate_basic_course_table(enroll_year):
     # manual setting
     print('> 正在產生修課規定:')
     if os.path.exists(f'{path}/{enroll_year}_基本畢業條件.json'):
+        # TODO: 改為是否重設學程
         if input(f'> {path}/{enroll_year}_基本畢業條件.json已存在，是否取代(Y/N)? ') != 'Y':
             return
     

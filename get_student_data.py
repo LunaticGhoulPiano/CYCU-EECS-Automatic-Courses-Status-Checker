@@ -71,7 +71,7 @@ def get_student_data(login_token, cookies):
 # get from MyMentor
 def get_course_properties(usr_id, usr_pwd):
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True) 
+        browser = p.chromium.launch(headless = True)
         page = browser.new_page() 
         page.goto(f'{MYMENTOR_URL}/index.do')
         page.fill('input#userId', usr_id)

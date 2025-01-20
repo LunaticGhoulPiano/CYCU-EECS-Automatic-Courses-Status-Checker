@@ -210,11 +210,8 @@ class StudentInfo:
                 elif any(course_name in name for name in self.basic_rules['學系必修']) or \
                     any(name in course_name for name in self.basic_rules['學系必修']):
                     temp_dict[course_name]['學分性質'] = '學系必修'
-                    # TODO: 解決工程數學(一)是[電子/電機/通訊]學系必修，同時也是學系選修-必修的問題
                 else:
                     # 學系選修
-                    ## TODO: 系統程式113入學前為{'資訊硬體學程': '核心', '資訊軟體學程': '必修', '資訊應用學程': '核心'}
-                    ## 要問怎麼判定
                     types = ['必修', '核心', '選修']
                     order = ['主修學程一', '主修學程二', '副修學程']
                     four_type_of_programs_mapping = {
@@ -244,6 +241,7 @@ class StudentInfo:
                                         temp_dict[course_name]['學分性質'] = '學系選修'
                                         temp_dict[course_name]['課程所屬學程性質'][major] = cur_type
                                         temp_dict[course_name]['資工四大類類別'].append(four_type)
+                                        temp_dict[course_name]['最終認定所屬資工四大類類別'] = ''
                                         temp_dict[course_name]['審查備註'][major] = self.credit_details[major_info['對應xlsx名']]['四大類']['審查備註']
                     # 電資學系選修: 'UP'
                     if temp_dict[course_name]['學分性質'] == '' and \
@@ -501,11 +499,11 @@ class StudentInfo:
             if credit_type == '基本知能':
                 for course, is_finished in basic_mapping[credit_type].items():
                     if not is_finished:
-                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 9)
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 10)
                 if len(free_pe_courses) < 3:
                     chinese_num_mapping = { 1: '一', 2: '二', 3: '三' }
                     for i in range(3 - len(free_pe_courses)):
-                        self.unfinished_courses[credit_type].append([f'體育興趣{chinese_num_mapping[i + 1]}'] + [''] * 6 + ['未修習'] + [''] * 9)
+                        self.unfinished_courses[credit_type].append([f'體育興趣{chinese_num_mapping[i + 1]}'] + [''] * 6 + ['未修習'] + [''] * 10)
             elif credit_type == '通識基礎必修':
                 four_types = ['天', '人', '物', '我']
                 has_citizen = False
@@ -527,7 +525,7 @@ class StudentInfo:
                             if (self.basic_rules[credit_type]['人'][course]['性質'] == '公民' and has_citizen) or \
                                 (self.basic_rules[credit_type]['人'][course]['性質'] == '歷史' and has_history):
                                 continue
-                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習', f] + [''] * 8)
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習', f] + [''] * 9)
             elif credit_type == '通識延伸選修':
                 # 確認天人物我最低學分數
                 for four_type, num in free_four_religion_types.items():
@@ -538,27 +536,212 @@ class StudentInfo:
                         if four_type == '人' and not basic_mapping[credit_type]['工程倫理']:
                             course_name = '工程倫理'
                             orc = '需為電資學院指定'
-                        self.unfinished_courses[credit_type].append([course_name, '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 8 + [orc])
+                        self.unfinished_courses[credit_type].append([course_name, '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 8 + [orc, ''])
                 # 確認畢業應修最低學分數
                 if int(self.sub_total_credits[credit_type]) < self.basic_rules['畢業應修最低學分數'][credit_type]:
                     remaining_credits = str(self.basic_rules['畢業應修最低學分數'][credit_type] - int(self.sub_total_credits[credit_type]))
-                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 9)
+                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 10)
             elif credit_type == '學系必修':
                 for course, is_finished in basic_mapping[credit_type].items():
                     if not is_finished:
-                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 9)
+                        self.unfinished_courses[credit_type].append([course] + [''] * 6 + ['未修習'] + [''] * 10)
             elif credit_type == '學系選修':
+                # set 資工 first
+                without_same_courses = set()
+                # 雙資工: 必修+核心全修, 選修有條件
+                if self.majors['主修學程一']['對應xlsx名'] == '資工' and self.majors['主修學程二']['對應xlsx名'] == '資工':
+                    must_and_course_msgs = []
+                    four_type_msgs = []
+                    has_judged_four_type = False
+                    for major in ['主修學程一', '主修學程二']:
+                        for cur_type in ['必修', '核心', '選修']:
+                            for course, is_finished in major_status[major][cur_type].items():
+                                if not is_finished and course not in without_same_courses:
+                                    # record to avoid repeating same course
+                                    without_same_courses.add(course)
+                                    credit_and_type_mapping = {
+                                        '學分數': '',
+                                        '主修學程一': {}, # '必核選', '審查備註'
+                                        '主修學程二': {},
+                                        '副修學程': {}
+                                    }
+                                    if cur_type != '選修':
+                                        # find it's type of major1, major2, sub_major
+                                        for temp_major in ['主修學程一', '主修學程二', '副修學程']:
+                                            for temp_type in ['必修', '核心']:
+                                                major_name = self.majors[temp_major]['學程名稱']
+                                                if course in self.credit_details['資工'][major_name][temp_type]['課程']:
+                                                    if credit_and_type_mapping['學分數'] == '':
+                                                        credit_and_type_mapping['學分數'] = self.credit_details['資工'][major_name][temp_type]['課程'][course]['學分數']
+                                                    credit_and_type_mapping[temp_major]['必核選'] = temp_type
+                                                    credit_and_type_mapping[temp_major]['審查備註'] = self.credit_details['資工'][major_name][temp_type]['課程'][course]['審查備註']
+                                                    break
+                                                else:
+                                                    credit_and_type_mapping['學分數'] = ''
+                                                    credit_and_type_mapping[temp_major]['必核選'] = ''
+                                                    credit_and_type_mapping[temp_major]['審查備註'] = ''
+                                        must_and_course_msgs.append([course, '', credit_and_type_mapping['學分數']] + [''] * 4 + \
+                                            ['未修習', '', credit_and_type_mapping['主修學程一']['必核選'], \
+                                                credit_and_type_mapping['主修學程二']['必核選'], \
+                                                    credit_and_type_mapping['副修學程']['必核選'], '', \
+                                                        credit_and_type_mapping['主修學程一']['審查備註'], \
+                                                            credit_and_type_mapping['主修學程二']['審查備註'], \
+                                                                credit_and_type_mapping['副修學程']['審查備註'], ''])
+                                    elif not has_judged_four_type:
+                                        has_judged_four_type = True
+                                        # find 四大類
+                                        major1_name = self.majors['主修學程一']['學程名稱']
+                                        major2_name = self.majors['主修學程二']['學程名稱']
+                                        major1_four_type = list(self.credit_details['資工'][major1_name]['選修']['認列四大類'].keys())
+                                        major2_four_type = list(self.credit_details['資工'][major2_name]['選修']['認列四大類'].keys())
+                                        
+                                        # get four-type courses of two majors
+                                        major1_courses = {}
+                                        major2_courses = {}
+                                        other_courses = {}
+                                        for c_set in self.sorted_historical_courses[credit_type]: # c_set[0]: course name, c_set[1]: course dict
+                                            if c_set[1]['資工四大類類別'] != []:
+                                                condi1 = any(four_type in major1_four_type for four_type in c_set[1]['資工四大類類別'])
+                                                condi2 = any(four_type in major2_four_type for four_type in c_set[1]['資工四大類類別'])
+                                                if condi1 or condi2:
+                                                    if condi1:
+                                                        major1_courses[c_set[0]] = {
+                                                            '學分數': int(c_set[1]['學分數']),
+                                                            '所屬四大類類別': c_set[1]['資工四大類類別'],
+                                                        }
+                                                    if condi2:
+                                                        major2_courses[c_set[0]] = {
+                                                            '學分數': int(c_set[1]['學分數']),
+                                                            '所屬四大類類別': c_set[1]['資工四大類類別'] }
+                                                else:
+                                                    other_courses[c_set[0]] = {
+                                                        '學分數': int(c_set[1]['學分數']),
+                                                        '所屬四大類類別': c_set[1]['資工四大類類別'] }
+                                        
+                                        # set order
+                                        order = []
+                                        if len(major1_courses) <= len(major2_courses):
+                                            order = [{
+                                                '課程': major1_courses,
+                                                '學程名稱': major1_name,
+                                                '認列四大類': major1_four_type
+                                            }, {
+                                                '課程': major2_courses,
+                                                '學程名稱': major2_name,
+                                                '認列四大類': major2_four_type
+                                            }, {
+                                                '課程': other_courses,
+                                                '學程名稱': '其它',
+                                                '認列四大類': []
+                                            }]
+                                        else:
+                                            order = [{
+                                                '課程': major2_courses,
+                                                '學程名稱': major2_name,
+                                                '認列四大類': major2_four_type
+                                            }, {
+                                                '課程': major1_courses,
+                                                '學程名稱': major1_name,
+                                                '認列四大類': major1_four_type
+                                            }, {
+                                                '課程': other_courses,
+                                                '學程名稱': '其它',
+                                                '認列四大類': []
+                                            }]
+                                        
+                                        # set credits and records
+                                        single_lowest_credit = int(self.credit_details['資工']['最低應修學分數']['雙資工']['選修各學程'])
+                                        total_lowest_credit = int(self.credit_details['資工']['最低應修學分數']['雙資工']['選修總共'])
+                                        single_major_credits = {
+                                            major1_name: 0,
+                                            major2_name: 0,
+                                            '其它': 0
+                                        }
+                                        ## remain = set()
+                                        program_of_course = {}
+
+                                        # judge
+                                        for stage in [0, 1, 2, 3, 4]:
+                                            for idx, l in enumerate(order):
+                                                if stage != 0 and l['學程名稱'] not in [major1_name, major2_name]:
+                                                    continue
+                                                for course_name, course_dict in l['課程'].items():
+                                                    if course_name not in program_of_course:
+                                                        # 優先選只認列一個四大類的課程
+                                                        condi_only_one_four_type = len(course_dict['所屬四大類類別']) == 1
+                                                        # 單一主修學程 < 6學分
+                                                        condi_single_lower_than_6 = single_major_credits[l['學程名稱']] < 6
+                                                        # 兩主修學程共 < 15學分
+                                                        condi_total_lower_than_15 = single_major_credits[major1_name] + single_major_credits[major2_name] < 15
+                                                        # stage 0 (只針對認列一個四大類的課程) 遇到非兩個主修認列的四大類要加入其它 
+                                                        # 因為這個階段出現的課程必然只有認列一個四大類
+                                                        # 當此四大類不在兩主修認列的四大類中就要丟到其它
+                                                        if stage == 0 and condi_only_one_four_type and l['學程名稱'] not in [major1_name, major2_name]:
+                                                            single_major_credits[l['學程名稱']] += course_dict['學分數']
+                                                            program_of_course[course_name] = l['學程名稱'] # '其它'
+                                                            continue
+                                                        # 正常流程
+                                                        if (stage == 0 and condi_only_one_four_type and condi_single_lower_than_6) or \
+                                                            (stage == 1 and condi_single_lower_than_6) or \
+                                                                (stage == 2 and condi_only_one_four_type and condi_total_lower_than_15) or \
+                                                                    (stage == 3 and condi_total_lower_than_15) or \
+                                                                        (stage == 4):
+                                                            single_major_credits[l['學程名稱']] += course_dict['學分數']
+                                                            program_of_course[course_name] = l['學程名稱']
+                                                            # if stage == 4: # 可用於判斷是否能用作自由選修
+                                                            #     remain.add(course_name)
+                                        
+                                        # write back the final four type
+                                        for c_set in self.sorted_historical_courses[credit_type]: # c_set[0]: course name, c_set[1]: course dict
+                                            if c_set[1]['資工四大類類別'] != []:
+                                                c_set[1]['最終認定所屬資工四大類類別'] = program_of_course[c_set[0]] if program_of_course[c_set[0]] != '其它' else ''
+                                        
+                                        # write back the still-need credit msgs
+                                        accumulated_credit = 0
+                                        if single_major_credits[major1_name] < single_lowest_credit:
+                                            need = single_lowest_credit - single_major_credits[major1_name]
+                                            accumulated_credit += need
+                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in major1_four_type if major1_four_type != []]), major1_name] + [''] * 4)
+                                        if single_major_credits[major2_name] < single_lowest_credit:
+                                            need = single_lowest_credit - single_major_credits[major2_name]
+                                            accumulated_credit += need
+                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in major2_four_type if major2_four_type != []]), major2_name] + [''] * 4)
+                                        if single_major_credits[major1_name] + single_major_credits[major2_name] < total_lowest_credit:
+                                            remain_credit = total_lowest_credit - single_major_credits[major1_name] - single_major_credits[major2_name] - accumulated_credit
+                                            all_four_type = major1_four_type + major2_four_type
+                                            four_type_msgs.append(['', '', remain_credit] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in all_four_type if all_four_type != []]), f'{major1_name} / {major2_name}'] + [''] * 4)
+                        # 單資工: 必修全修, 核心有條件
+                    # append 必修/核心 first, then 選修
+                    for msg_list in [must_and_course_msgs, four_type_msgs]:
+                        for msg in msg_list:
+                            self.unfinished_courses[credit_type].append(msg)
+                #elif self.majors[major]['對應xlsx名'] == '資工':
+                #    pass
+                # judge program of majors
+                # 雙資工不用管副修
+                # 單資工的資工學程不用管選修
+                # 其它
                 # TODO
+                ## 非資工的必修/核心不能跨學程重複認列
+                ## 工程數學(一)大一未選學程時預設為必修，但只有通訊/電子/電機底下學程才是必修
+                ## 因此如果是主修的兩個學程中有此門課才要放到學系選修
+                ## 不然就是按照課程所屬課程性質
                 pass
             else: # 自由選修
                 if int(self.sub_total_credits[credit_type]) < self.basic_rules['畢業應修最低學分數'][credit_type]:
                     remaining_credits = str(self.basic_rules['畢業應修最低學分數'][credit_type] - int(self.sub_total_credits[credit_type]))
-                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 9)
+                    self.unfinished_courses[credit_type].append(['', '', remaining_credits] + [''] * 4 + ['未修習'] + [''] * 10)
         #print(self.unfinished_courses)
     
     # TODO: 智慧偵測並分配自由選修
     # 會需要改動self.sub_total_credits等
+    # 可能砍掉不做這個
     def detect_and_distribute_free_elective_courses(self):
+        pass
+    
+    # TODO
+    # 有資料再做
+    def generate_future_courses(self):
         pass
 
     def print_sorted_historical_courses(self):
