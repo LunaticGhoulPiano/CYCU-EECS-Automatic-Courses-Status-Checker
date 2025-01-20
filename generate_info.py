@@ -129,9 +129,85 @@ def generate(info):
             for column in range(1, 19):
                 ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'FFBDF7', end_color = 'FFBDF7', fill_type = 'solid')
 
-    # TODO: 2. worksheet 1: future course table
-    ws = wb.create_sheet(title = '預排課表')
+    # 2. worksheet 1: future course table
+    if info.chose_list != []:
+        info.generate_future_courses()
+        ws = wb.create_sheet(title = '預排課表')
+        max_cell_width = [0 for _ in range(9)] # 9 columns
 
+        ## set head
+        head = ['時間', '週一', '週二', '週三', '週四', '週五', '週六', '週日', '非同步遠距']
+        body = []
+
+        ## get body msgs
+        temp_msgs = {
+            'A (07:10 ~ 08:00)': [''] * 7,
+            '1 (08:10 ~ 09:00)': [''] * 7,
+            '2 (09:10 ~ 10:00)': [''] * 7,
+            '3 (10:10 ~ 11:00)': [''] * 7,
+            '4 (11:10 ~ 12:00)': [''] * 7,
+            'B (12:10 ~ 13:00)': [''] * 7,
+            '5 (13:10 ~ 14:00)': [''] * 7,
+            '6 (14:10 ~ 15:00)': [''] * 7,
+            '7 (15:10 ~ 16:00)': [''] * 7,
+            '8 (16:10 ~ 17:00)': [''] * 7,
+            'C (17:05 ~ 17:55)': [''] * 7,
+            'D (18:00 ~ 18:50)': [''] * 7,
+            'E (19:55 ~ 19:45)': [''] * 7,
+            'F (19:50 ~ 20:40)': [''] * 7,
+            'G (20:45 ~ 21:35)': [''] * 7
+        }
+        for day in info.future_courses:
+            day_idx = head.index(day)
+            if day != '非同步遠距':
+                for time_slot in info.future_courses[day]:
+                    temp_msgs[time_slot][day_idx-1] = info.future_courses[day][time_slot]
+        
+        ## set body
+        basic_len = len(temp_msgs) # 15
+        online_courses_len = len(info.future_courses['非同步遠距'])
+        bigger_len = max(basic_len, online_courses_len)
+        for row_idx in range(bigger_len):
+            if online_courses_len <= basic_len:
+                if row_idx < online_courses_len:
+                    body.append([list(temp_msgs.keys())[row_idx]] + temp_msgs[list(temp_msgs.keys())[row_idx]] + [info.future_courses['非同步遠距'][row_idx]])
+                else:
+                    body.append([list(temp_msgs.keys())[row_idx]] + temp_msgs[list(temp_msgs.keys())[row_idx]] + [''])
+            else:
+                if row_idx < basic_len:
+                    body.append([list(temp_msgs.keys())[row_idx]] + temp_msgs[list(temp_msgs.keys())[row_idx]] + [info.future_courses['非同步遠距'][row_idx]])
+                else:
+                    body.append([''] * (len(head) - 1) + [info.future_courses['非同步遠距'][row_idx]])
+        
+        ## set cell width
+        for part in [head, body]:
+            for row in part:
+                for i, cell in enumerate(row):
+                    cell_length = sum(get_char_width(c) for c in str(cell))
+                    if cell_length > max_cell_width[i]:
+                        max_cell_width[i] = cell_length
+        for i in range(9):
+            ws.column_dimensions[chr(65 + i)].width = max_cell_width[i] + 10 # offset
+        
+        ## write head and details
+        head_start_row_index = 1
+        for column_index, cell_data in enumerate(head, start = head_start_row_index):
+            cell = ws.cell(row = 1, column = column_index, value = cell_data)
+            for column in range(1, 10):
+                ws.cell(row = 1, column = column).fill = PatternFill(start_color = '4BACC6', end_color = '4BACC6', fill_type = 'solid')
+                ws.cell(row = 1, column = column).font = Font(bold = True)
+        
+        ## write body and set details
+        body_start_row_index = head_start_row_index + 1
+        for row_index, row_data in enumerate(body, start = body_start_row_index):
+            for column_index, cell_data in enumerate(row_data, start = 1):
+                cell = ws.cell(row = row_index, column = column_index, value = cell_data)
+                if column_index == 1:
+                    ws.cell(row = row_index, column = column_index).fill = PatternFill(start_color = 'B7DEE8', end_color = 'B7DEE8', fill_type = 'solid')
+                    ws.cell(row = row_index, column = column_index).font = Font(bold = True)
+                else:
+                    ws.cell(row = row_index, column = column_index).fill = PatternFill(start_color = 'FDE9D9', end_color = 'FDE9D9', fill_type = 'solid')
+    
     # TODO: 3. worksheet 2: major1's credit detail
     ws = wb.create_sheet(title = f"主副修學程規劃表")
     #head, body, max_cell_width = write_program_details(info)

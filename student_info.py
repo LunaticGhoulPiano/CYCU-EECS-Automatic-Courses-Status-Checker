@@ -69,6 +69,7 @@ class StudentInfo:
         self.sorted_historical_courses = [] # 按照self.order排序的歷年修課清單
         self.course_properties_mapping = {} # 歷年課程對應的屬性
         self.chose_list = [] # 已選上的課程清單
+        self.future_courses = {} # 將已選上的課程清單轉為預排課表
         self.register_list = [] # 登記清單
         self.track_list = [] # 追蹤清單
         self.basic_rules = basic_rules # 基本畢業條件
@@ -285,8 +286,8 @@ class StudentInfo:
                     '課程代碼': course_dict['OP_CODE'].strip(),
                     '學分數': course_dict['OP_CREDIT'].strip(),
                     '期程': course_dict['OP_QUALITY'].strip(),
-                    '上課時間': course_dict['OP_TIME_123'].strip(),
-                    '上課地點': course_dict['OP_RM_NAME_123'].strip() if 'OP_RM_NAME_123' in course_dict else '',
+                    '上課時間': [t for t in course_dict['OP_TIME_123'].split('  ') if t != ''],
+                    '上課地點': [t for t in course_dict['OP_RM_NAME_123'].split('  ') if t != ''],
                     '教授': course_dict['TEACHER'].strip(),
                     '必選修': course_dict['OP_STDY'].strip(),
                     '開課學系': course_dict['DEPT_NAME'].strip()
@@ -739,10 +740,61 @@ class StudentInfo:
     def detect_and_distribute_free_elective_courses(self):
         pass
     
-    # TODO
-    # 有資料再做
     def generate_future_courses(self):
-        pass
+        for day in ['週一', '週二', '週三', '週四', '週五', '週六', '週日']:
+            self.future_courses[day] = {
+                'A (07:10 ~ 08:00)': '',
+                '1 (08:10 ~ 09:00)': '',
+                '2 (09:10 ~ 10:00)': '',
+                '3 (10:10 ~ 11:00)': '',
+                '4 (11:10 ~ 12:00)': '',
+                'B (12:10 ~ 13:00)': '',
+                '5 (13:10 ~ 14:00)': '',
+                '6 (14:10 ~ 15:00)': '',
+                '7 (15:10 ~ 16:00)': '',
+                '8 (16:10 ~ 17:00)': '',
+                'C (17:05 ~ 17:55)': '',
+                'D (18:00 ~ 18:50)': '',
+                'E (19:55 ~ 19:45)': '',
+                'F (19:50 ~ 20:40)': '',
+                'G (20:45 ~ 21:35)': ''
+            }
+        day_mapping = {
+            '1': '週一',
+            '2': '週二',
+            '3': '週三',
+            '4': '週四',
+            '5': '週五',
+            '6': '週六',
+            '7': '週日'
+        }
+        time_slot_mapping = {
+            'A': 'A (07:10 ~ 08:00)',
+            '1': '1 (08:10 ~ 09:00)',
+            '2': '2 (09:10 ~ 10:00)',
+            '3': '3 (10:10 ~ 11:00)',
+            '4': '4 (11:10 ~ 12:00)',
+            'B': 'B (12:10 ~ 13:00)',
+            '5': '5 (13:10 ~ 14:00)',
+            '6': '6 (14:10 ~ 15:00)',
+            '7': '7 (15:10 ~ 16:00)',
+            '8': '8 (16:10 ~ 17:00)',
+            'C': 'C (17:05 ~ 17:55)',
+            'D': 'D (18:00 ~ 18:50)',
+            'E': 'E (19:55 ~ 19:45)',
+            'F': 'F (19:50 ~ 20:40)',
+            'G': 'G (20:45 ~ 21:35)'
+        }
+        online_courses = []
+        for course, course_dict in self.chose_list.items():
+            if course_dict['上課時間'] != []:
+                for take_time, take_place in zip(course_dict['上課時間'], course_dict['上課地點']):
+                    single_day = take_time.split('-')
+                    for time_slot in single_day[1]:
+                        self.future_courses[day_mapping[single_day[0]]][time_slot_mapping[time_slot]] = f"{course_dict['課程代碼']} - {course}，{take_place} ({course_dict['教授']}，{course_dict['學分數']}學分)"
+            else:
+                online_courses.append(f"{course_dict['課程代碼']} - {course} ({course_dict['教授']}，{course_dict['學分數']}學分)")
+        self.future_courses['非同步遠距'] = online_courses
 
     def print_sorted_historical_courses(self):
         print(f'總共修習{len(self.historical_course_list)}門課程，已修過{self.pass_credits}學分，正在修習{self.current_credits}學分')
