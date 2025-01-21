@@ -190,28 +190,8 @@ def generate(info):
                 else:
                     ws.cell(row = row_index, column = column_index).fill = PatternFill(start_color = 'FDE9D9', end_color = 'FDE9D9', fill_type = 'solid')
     
-    # TODO: 3. worksheet 2: major1's credit detail
+    # 3. worksheet 2: major1's credit detail
     ws = wb.create_sheet(title = '主副修學程規劃表')
-    """
-    # testing
-    info.majors = { # 學程
-        '主修學程一': {
-            '學程名稱': '通訊學程',
-            '所屬學系': '電機工程學系',
-            '對應xlsx名': '通訊'
-        },
-        '主修學程二': {
-            '學程名稱': '品質管理學程',
-            '所屬學系': '工業與系統工程學系',
-            '對應xlsx名': '工業'
-        },
-        '副修學程': {
-            '學程名稱': '資訊硬體學程',
-            '所屬學系': '資訊工程學系',
-            '對應xlsx名': '資工'
-        },
-    }
-    """
 
     ## set credit msgs
     credits_mapping = {}
@@ -380,6 +360,7 @@ def generate(info):
                 if row_index == 1:
                     ws.cell(row = row_index, column = column_offset_idx + column_index).fill = PatternFill(start_color = 'B7DEE8', end_color = 'B7DEE8', fill_type = 'solid')
                     ws.cell(row = row_index, column = column_offset_idx + column_index).font = Font(bold = True)
+    
     # save workbook
     wb.save(excel_file_path)
 
