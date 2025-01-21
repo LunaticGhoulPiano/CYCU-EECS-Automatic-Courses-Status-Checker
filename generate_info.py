@@ -52,7 +52,7 @@ def generate(info):
 
         ### write content
         for course_name, course_dict in course: # tuple
-            course_property = ' / '.join([p for p in course_dict['課程性質'] if p != ''])
+            course_property = ' / '.join([p if p != 'P' else 'PBL' for p in course_dict['課程性質'] if p != ''])
             cs_four_type = ' / '.join([t for t in course_dict['資工四大類類別'] if t != ''])
             final_four_type = course_dict['最終認定所屬主修學程'] if '最終認定所屬主修學程' in course_dict else ''
             row_content = [course_name, course_dict['課程代碼'], course_dict['學分數'], course_dict['期程'], course_dict['修畢學期'], \
@@ -110,7 +110,10 @@ def generate(info):
         elif row_data[0] == '已修畢+正在修習之合計學分數':
             for column in range(1, 19):
                 ws.cell(row = row_index, column = column).fill = PatternFill(start_color = 'FFBDF7', end_color = 'FFBDF7', fill_type = 'solid')
-
+        # check eng
+        if '英' in ws.cell(row_index, 6).value:
+            ws.cell(row = row_index, column = 6).fill = PatternFill(start_color = 'FF0000', end_color = 'FF0000', fill_type = 'solid')
+            ws.cell(row = row_index, column = 6).font = Font(color = 'FFFF00')
     # 2. worksheet 1: future course table
     if info.chose_list != []:
         info.generate_future_courses()
@@ -385,6 +388,7 @@ def generate_info(enroll_year):
         # generate
         #print(info.unfinished_courses)
         generate(info)
+        print(f' 請查看Generated資料夾內的\"總表.xlsx\"！')
     else:
         print('error')
         return
