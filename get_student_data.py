@@ -53,6 +53,9 @@ def get_file(login_token, cookies, authApi, tgt_url, method, file_name):
     auth_token, cookies = authenticate(cookies, authApi)
     if auth_token:
         json_file = get_json(login_token, auth_token, cookies, tgt_url, method)
+        if method == 'st_base_info' and not json_file['sys_open']:
+            print(f'> 選課系統維護中！請於維護時段外重試。')
+            exit()
         if json_file:
             with open(f'{file_name}.json', 'w', encoding = 'utf-8') as f:
                 f.write(json.dumps(json_file, indent = 4, ensure_ascii = False))
