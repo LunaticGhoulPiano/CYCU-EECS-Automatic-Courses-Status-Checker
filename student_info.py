@@ -286,8 +286,8 @@ class StudentInfo:
                     '課程代碼': course_dict['OP_CODE'].strip(),
                     '學分數': course_dict['OP_CREDIT'].strip(),
                     '期程': course_dict['OP_QUALITY'].strip(),
-                    '上課時間': [t for t in course_dict['OP_TIME_123'].split('  ') if t != ''],
-                    '上課地點': [t for t in course_dict['OP_RM_NAME_123'].split('  ') if t != ''],
+                    '上課時間': [substr for substr in course_dict['OP_TIME_123'].split() if substr],
+                    '上課地點': [substr for substr in course_dict['OP_RM_NAME_123'].split() if substr],
                     '教授': course_dict['TEACHER'].strip(),
                     '必選修': course_dict['OP_STDY'].strip(),
                     '開課學系': course_dict['DEPT_NAME'].strip()
@@ -309,7 +309,7 @@ class StudentInfo:
                 temp_dict[track_dict['CNAME'].strip()] = {
                     '課程代碼': track_dict['OP_CODE'].strip(),
                     '學分數': track_dict['OP_CREDIT'].strip(),
-                    '上課時間': track_dict['OP_TIME_123'].strip(),
+                    '上課時間': [substr for substr in track_dict['OP_TIME_123'].split() if substr],
                     '上課地點': track_dict['OP_RM_NAME_1'].strip() if 'OP_RM_NAME_1' in track_dict else '',
                     '教授': track_dict['TEACHER'].strip(),
                     '必選修': track_dict['OP_STDY'].strip(),
@@ -365,7 +365,7 @@ class StudentInfo:
                     sorted_courses[credit_type] = sorted(sorted_courses[credit_type], \
                         key = lambda x: (
                             # 1. '課程性質' != [] and 任一性質 in course_order -> 按min_index排序
-                            min(course_order.index(n) for n in x[1]['課程性質'] if n in course_order) if x[1]['課程性質'] else float('inf'),
+                            min((course_order.index(n) for n in x[1]['課程性質'] if n in course_order), default = float('inf')),
                             # 2. '專業自主學習' 排在以上順序的後面
                             0 if x[0] == '專業自主學習' else 1,
                             # 3. 課程性質 == [] -> 排在後面
@@ -571,7 +571,8 @@ class StudentInfo:
                                         for temp_major in ['主修學程一', '主修學程二', '副修學程']:
                                             for temp_type in ['必修', '核心']:
                                                 major_name = self.majors[temp_major]['學程名稱']
-                                                if course in self.credit_details['資工'][major_name][temp_type]['課程']:
+                                                if major_name in self.credit_details['資工'] and \
+                                                    course in self.credit_details['資工'][major_name][temp_type]['課程']:
                                                     if credit_and_type_mapping['學分數'] == '':
                                                         credit_and_type_mapping['學分數'] = self.credit_details['資工'][major_name][temp_type]['課程'][course]['學分數']
                                                     credit_and_type_mapping[temp_major]['必核選'] = temp_type
@@ -584,7 +585,7 @@ class StudentInfo:
                                         must_and_course_msgs.append([course, '', credit_and_type_mapping['學分數']] + [''] * 4 + \
                                             ['未修習', '', credit_and_type_mapping['主修學程一']['必核選'], \
                                                 credit_and_type_mapping['主修學程二']['必核選'], \
-                                                    credit_and_type_mapping['副修學程']['必核選'], '', \
+                                                    credit_and_type_mapping['副修學程']['必核選'], '', '', \
                                                         credit_and_type_mapping['主修學程一']['審查備註'], \
                                                             credit_and_type_mapping['主修學程二']['審查備註'], \
                                                                 credit_and_type_mapping['副修學程']['審查備註'], ''])
@@ -702,15 +703,15 @@ class StudentInfo:
                                         if single_major_credits[major1_name] < single_lowest_credit:
                                             need = single_lowest_credit - single_major_credits[major1_name]
                                             accumulated_credit += need
-                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in major1_four_type if major1_four_type != []]), major1_name] + [''] * 4)
+                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習', '', '選修', '', ''] + [' / '.join([p for p in major1_four_type if major1_four_type != []]), major1_name] + [''] * 4)
                                         if single_major_credits[major2_name] < single_lowest_credit:
                                             need = single_lowest_credit - single_major_credits[major2_name]
                                             accumulated_credit += need
-                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in major2_four_type if major2_four_type != []]), major2_name] + [''] * 4)
+                                            four_type_msgs.append(['', '', need] + [''] * 4 + ['未修習', '', '', '選修', ''] + [' / '.join([p for p in major2_four_type if major2_four_type != []]), major2_name] + [''] * 4)
                                         if single_major_credits[major1_name] + single_major_credits[major2_name] < total_lowest_credit:
                                             remain_credit = total_lowest_credit - single_major_credits[major1_name] - single_major_credits[major2_name] - accumulated_credit
                                             all_four_type = major1_four_type + major2_four_type
-                                            four_type_msgs.append(['', '', remain_credit] + [''] * 4 + ['未修習'] + [''] * 4 + [' / '.join([p for p in all_four_type if all_four_type != []]), f'{major1_name} / {major2_name}'] + [''] * 4)
+                                            four_type_msgs.append(['', '', remain_credit] + [''] * 4 + ['未修習', '', '選修', '選修', ''] + [' / '.join([p for p in all_four_type if all_four_type != []]), f'{major1_name} / {major2_name}'] + [''] * 4)
                         # 單資工: 必修全修, 核心有條件
                     # append 必修/核心 first, then 選修
                     for msg_list in [must_and_course_msgs, four_type_msgs]:
