@@ -26,6 +26,7 @@ https://youtu.be/SjwGFxUXUtc
 ## TODOs:
 1. 智慧分配自由選修
 2. 判斷單資工&非資工學程
+3. 用customtkinter寫gui
 4. 使用pyinstaller打包成可執行檔發行Release (Windows / macOS / Linux)
 5. 其它:
     - 搞清楚```student_info.parse()```中的以下問題：
