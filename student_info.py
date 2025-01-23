@@ -267,6 +267,7 @@ class StudentInfo:
             self.sys_eng_course_pass = {}
         else:
             temp_dict = {}
+            """
             for course_dict in self.sys_eng_courses:
                 temp_dict[course_dict['CURS_NM_C_S'].strip()] = {
                     '課程代碼': course_dict['OP_CODE'].strip(),
@@ -274,6 +275,7 @@ class StudentInfo:
                     '修畢學期': course_dict['YEAR_TERM'].strip(),
                     '分數': course_dict['SCORE_FNAL'].strip()
                 }
+            """
             self.sys_eng_courses = temp_dict
 
         # self.chose_list
@@ -283,14 +285,14 @@ class StudentInfo:
             temp_dict = {}
             for course_dict in self.chose_list:
                 temp_dict[course_dict['CNAME'].strip()] = {
-                    '課程代碼': course_dict['OP_CODE'].strip(),
-                    '學分數': course_dict['OP_CREDIT'].strip(),
-                    '期程': course_dict['OP_QUALITY'].strip(),
-                    '上課時間': [substr for substr in course_dict['OP_TIME_123'].split() if substr],
-                    '上課地點': [substr for substr in course_dict['OP_RM_NAME_123'].split() if substr],
-                    '教授': course_dict['TEACHER'].strip(),
-                    '必選修': course_dict['OP_STDY'].strip(),
-                    '開課學系': course_dict['DEPT_NAME'].strip()
+                    '課程代碼': course_dict['OP_CODE'].strip() if 'OP_CODE' in course_dict else '',
+                    '學分數': course_dict['OP_CREDIT'].strip() if 'OP_CREDIT' in course_dict else '',
+                    '期程': course_dict['OP_QUALITY'].strip() if 'OP_QUALITY' in course_dict else '',
+                    '上課時間': [substr for substr in course_dict['OP_TIME_123'].split() if substr] if 'OP_TIME_123' in course_dict else [],
+                    '上課地點': [substr for substr in course_dict['OP_RM_NAME_123'].split() if substr] if 'OP_RM_NAME_123' in course_dict else [],
+                    '教授': course_dict['TEACHER'].strip() if 'TEACHER' in course_dict else '',
+                    '必選修': course_dict['OP_STDY'].strip() if 'OP_STDY' in course_dict else '',
+                    '開課學系': course_dict['DEPT_NAME'].strip() if 'DEPT_NAME' in course_dict else '',
                 }
             self.chose_list = temp_dict
         
@@ -305,16 +307,18 @@ class StudentInfo:
             self.track_list = {}
         else:
             temp_dict = {}
+            """
             for track_dict in self.track_list:
                 temp_dict[track_dict['CNAME'].strip()] = {
                     '課程代碼': track_dict['OP_CODE'].strip(),
                     '學分數': track_dict['OP_CREDIT'].strip(),
                     '上課時間': [substr for substr in track_dict['OP_TIME_123'].split() if substr],
                     '上課地點': track_dict['OP_RM_NAME_1'].strip() if 'OP_RM_NAME_1' in track_dict else '',
-                    '教授': track_dict['TEACHER'].strip(),
+                    '教授': track_dict['TEACHER'].strip() if 'TEACHER' in track_dict else '',
                     '必選修': track_dict['OP_STDY'].strip(),
                     '開課學系': track_dict['DEPT_NAME'].strip()
                 }
+            """
             self.track_list = temp_dict
     
     def sort_historical_courses(self):
