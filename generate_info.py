@@ -52,7 +52,7 @@ def generate(info):
 
         ### write content
         for course_name, course_dict in course: # tuple
-            course_property = ' / '.join([p if p != 'P' else 'PBL' for p in course_dict['課程性質'] if p != ''])
+            course_property = ' / '.join(['磨課師' if p == 'M' else ('PBL' if p == 'P' else p) for p in course_dict['課程性質'] if p != ''])
             cs_four_type = ' / '.join([t for t in course_dict['資工四大類類別'] if t != ''])
             final_four_type = course_dict['最終認定所屬主修學程'] if '最終認定所屬主修學程' in course_dict else ''
             row_content = [course_name, course_dict['課程代碼'], course_dict['學分數'], course_dict['期程'], course_dict['修畢學期'], \
