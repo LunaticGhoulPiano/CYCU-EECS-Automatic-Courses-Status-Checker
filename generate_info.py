@@ -365,7 +365,11 @@ def generate(info):
                     ws.cell(row = row_index, column = column_offset_idx + column_index).font = Font(bold = True)
     
     # save workbook
-    wb.save(excel_file_path)
+    try:
+        wb.save(excel_file_path)
+        print(f' 請查看Generated資料夾內的\"總表.xlsx\"！')
+    except PermissionError as e:
+        print('> 錯誤：請先關閉excel檔案！')
 
 # read json files, and generate excel file of course status
 def generate_info(enroll_year):
@@ -388,8 +392,4 @@ def generate_info(enroll_year):
         # generate
         #print(info.unfinished_courses)
         generate(info)
-        print(f' 請查看Generated資料夾內的\"總表.xlsx\"！')
-    else:
-        print('error')
-        return
 #generate_info('110')
