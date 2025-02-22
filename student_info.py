@@ -721,10 +721,9 @@ class StudentInfo:
                     for msg_list in [must_and_course_msgs, four_type_msgs]:
                         for msg in msg_list:
                             self.unfinished_courses[credit_type].append(msg)
-                #elif self.majors[major]['對應xlsx名'] == '資工':
-                #    pass
+                #else:
+                #    msgs = { '主修學程一': [], '主修學程二': [] }
                 # judge program of majors
-                # 雙資工不用管副修
                 # 單資工的資工學程不用管選修
                 # 其它
                 # TODO
